@@ -1,0 +1,1584 @@
+{
+  "project_name": "regime-aware-rainfall-ai",
+  "model_version": "1.0.0",
+  "seed": 42,
+  "regime_classifier_evaluation": {
+    "accuracy": 0.993,
+    "report": {
+      "normal_monsoon": {
+        "precision": 0.9994871794871795,
+        "recall": 0.9918575063613232,
+        "f1-score": 0.9956577266922095,
+        "support": 1965
+      },
+      "active_monsoon": {
+        "precision": 0.9515669515669516,
+        "recall": 1.0,
+        "f1-score": 0.9751824817518249,
+        "support": 334
+      },
+      "break_monsoon": {
+        "precision": 1.0,
+        "recall": 0.9743589743589743,
+        "f1-score": 0.9870129870129869,
+        "support": 39
+      },
+      "monsoon_depression": {
+        "precision": 0.9772727272727273,
+        "recall": 0.9347826086956522,
+        "f1-score": 0.9555555555555557,
+        "support": 46
+      },
+      "coastal_rainfall": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1-score": 1.0,
+        "support": 371
+      },
+      "orographic_rainfall": {
+        "precision": 1.0,
+        "recall": 0.9948320413436692,
+        "f1-score": 0.9974093264248705,
+        "support": 387
+      },
+      "western_disturbance": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1-score": 0.0,
+        "support": 0
+      },
+      "extreme_event": {
+        "precision": 0.9629629629629629,
+        "recall": 1.0,
+        "f1-score": 0.9811320754716981,
+        "support": 78
+      },
+      "micro avg": {
+        "precision": 0.993167701863354,
+        "recall": 0.993167701863354,
+        "f1-score": 0.993167701863354,
+        "support": 3220
+      },
+      "macro avg": {
+        "precision": 0.8614112276612277,
+        "recall": 0.8619788913449524,
+        "f1-score": 0.8614937691136432,
+        "support": 3220
+      },
+      "weighted avg": {
+        "precision": 0.9934414056153186,
+        "recall": 0.993167701863354,
+        "f1-score": 0.9932152655644659,
+        "support": 3220
+      }
+    },
+    "confusion_matrix": [
+      [
+        1949,
+        16,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        334,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        1,
+        0,
+        38,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        43,
+        0,
+        0,
+        0,
+        3
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        371,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        1,
+        0,
+        1,
+        0,
+        385,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        78
+      ]
+    ],
+    "feature_importance": [
+      {
+        "feature": "log_rainfall_nwp",
+        "importance": 0.1733
+      },
+      {
+        "feature": "rainfall_nwp",
+        "importance": 0.162
+      },
+      {
+        "feature": "pressure",
+        "importance": 0.1132
+      },
+      {
+        "feature": "elevation",
+        "importance": 0.0869
+      },
+      {
+        "feature": "coast_dist_km",
+        "importance": 0.0717
+      },
+      {
+        "feature": "humidity",
+        "importance": 0.0563
+      },
+      {
+        "feature": "orographic_enhancement_index",
+        "importance": 0.0513
+      },
+      {
+        "feature": "cape",
+        "importance": 0.0475
+      },
+      {
+        "feature": "lat",
+        "importance": 0.0453
+      },
+      {
+        "feature": "moisture_flux",
+        "importance": 0.0416
+      },
+      {
+        "feature": "nwp_bias_prior",
+        "importance": 0.0315
+      },
+      {
+        "feature": "lon",
+        "importance": 0.027
+      },
+      {
+        "feature": "wind_speed",
+        "importance": 0.0249
+      },
+      {
+        "feature": "vertical_velocity",
+        "importance": 0.0241
+      },
+      {
+        "feature": "dewpoint_approx",
+        "importance": 0.0156
+      },
+      {
+        "feature": "temperature",
+        "importance": 0.0132
+      },
+      {
+        "feature": "wind_u",
+        "importance": 0.0063
+      },
+      {
+        "feature": "wind_v",
+        "importance": 0.0048
+      },
+      {
+        "feature": "day_of_year",
+        "importance": 0.0025
+      },
+      {
+        "feature": "month",
+        "importance": 0.0006
+      },
+      {
+        "feature": "is_monsoon_core",
+        "importance": 0.0003
+      },
+      {
+        "feature": "lead_time_hours",
+        "importance": 0.0
+      }
+    ]
+  },
+  "model_comparison": {
+    "threshold_evaluated_mm": 64.5,
+    "sample_size": 3220,
+    "comparison_table": [
+      {
+        "model": "Raw NWP",
+        "rmse": 15.0,
+        "mae": 7.72,
+        "bias": -4.71,
+        "correlation": 0.969,
+        "csi": 0.525,
+        "ets": 0.484,
+        "pod": 0.541,
+        "far": 0.053,
+        "frequency_bias": 0.571,
+        "fss": 0.786,
+        "hits": 252,
+        "misses": 214,
+        "false_alarms": 14
+      },
+      {
+        "model": "Global Bias Corrected",
+        "rmse": 14.24,
+        "mae": 9.38,
+        "bias": -0.02,
+        "correlation": 0.969,
+        "csi": 0.569,
+        "ets": 0.524,
+        "pod": 0.62,
+        "far": 0.127,
+        "frequency_bias": 0.71,
+        "fss": 0.841,
+        "hits": 289,
+        "misses": 177,
+        "false_alarms": 42
+      },
+      {
+        "model": "ML Post-Processor (No Regime)",
+        "rmse": 0.8,
+        "mae": 0.32,
+        "bias": -0.01,
+        "correlation": 1.0,
+        "csi": 0.998,
+        "ets": 0.997,
+        "pod": 0.998,
+        "far": 0.0,
+        "frequency_bias": 0.998,
+        "fss": 1.0,
+        "hits": 465,
+        "misses": 1,
+        "false_alarms": 0
+      },
+      {
+        "model": "Regime-Aware AI (Proposed)",
+        "rmse": 1.08,
+        "mae": 0.44,
+        "bias": -0.04,
+        "correlation": 1.0,
+        "csi": 0.989,
+        "ets": 0.987,
+        "pod": 0.989,
+        "far": 0.0,
+        "frequency_bias": 0.989,
+        "fss": 0.998,
+        "hits": 461,
+        "misses": 5,
+        "false_alarms": 0
+      },
+      {
+        "model": "Hybrid Regime Model",
+        "rmse": 0.7,
+        "mae": 0.24,
+        "bias": 0.02,
+        "correlation": 1.0,
+        "csi": 0.996,
+        "ets": 0.995,
+        "pod": 0.996,
+        "far": 0.0,
+        "frequency_bias": 0.996,
+        "fss": 0.999,
+        "hits": 464,
+        "misses": 2,
+        "false_alarms": 0
+      }
+    ]
+  },
+  "regime_wise_verification": {
+    "threshold": 64.5,
+    "regime_breakdown": [
+      {
+        "regime": "active_monsoon",
+        "count": 334,
+        "obs_mean": 47.3,
+        "models": {
+          "Raw NWP": {
+            "rmse": 10.98,
+            "mae": 6.78,
+            "bias": -4.04,
+            "csi": 0.222,
+            "pod": 0.25,
+            "far": 0.333
+          },
+          "Global Bias Corrected": {
+            "rmse": 10.23,
+            "mae": 7.73,
+            "bias": 0.65,
+            "csi": 0.263,
+            "pod": 0.357,
+            "far": 0.5
+          },
+          "ML Post-Processor (No Regime)": {
+            "rmse": 0.5,
+            "mae": 0.36,
+            "bias": 0.0,
+            "csi": 1.0,
+            "pod": 1.0,
+            "far": 0.0
+          },
+          "Regime-Aware AI (Proposed)": {
+            "rmse": 0.9,
+            "mae": 0.57,
+            "bias": 0.0,
+            "csi": 0.982,
+            "pod": 0.982,
+            "far": 0.0
+          },
+          "Hybrid Regime Model": {
+            "rmse": 0.42,
+            "mae": 0.27,
+            "bias": 0.03,
+            "csi": 1.0,
+            "pod": 1.0,
+            "far": 0.0
+          }
+        }
+      },
+      {
+        "regime": "break_monsoon",
+        "count": 39,
+        "obs_mean": 0.2,
+        "models": {
+          "Raw NWP": {
+            "rmse": 2.13,
+            "mae": 1.38,
+            "bias": 1.25,
+            "csi": 0.0,
+            "pod": 0.0,
+            "far": 0.0
+          },
+          "Global Bias Corrected": {
+            "rmse": 6.18,
+            "mae": 5.94,
+            "bias": 5.94,
+            "csi": 0.0,
+            "pod": 0.0,
+            "far": 0.0
+          },
+          "ML Post-Processor (No Regime)": {
+            "rmse": 0.1,
+            "mae": 0.02,
+            "bias": -0.01,
+            "csi": 0.0,
+            "pod": 0.0,
+            "far": 0.0
+          },
+          "Regime-Aware AI (Proposed)": {
+            "rmse": 0.66,
+            "mae": 0.23,
+            "bias": -0.02,
+            "csi": 0.0,
+            "pod": 0.0,
+            "far": 0.0
+          },
+          "Hybrid Regime Model": {
+            "rmse": 0.04,
+            "mae": 0.01,
+            "bias": -0.0,
+            "csi": 0.0,
+            "pod": 0.0,
+            "far": 0.0
+          }
+        }
+      },
+      {
+        "regime": "coastal_rainfall",
+        "count": 371,
+        "obs_mean": 50.4,
+        "models": {
+          "Raw NWP": {
+            "rmse": 16.59,
+            "mae": 10.7,
+            "bias": -8.27,
+            "csi": 0.5,
+            "pod": 0.514,
+            "far": 0.051
+          },
+          "Global Bias Corrected": {
+            "rmse": 14.83,
+            "mae": 10.87,
+            "bias": -3.58,
+            "csi": 0.512,
+            "pod": 0.569,
+            "far": 0.162
+          },
+          "ML Post-Processor (No Regime)": {
+            "rmse": 0.66,
+            "mae": 0.43,
+            "bias": 0.03,
+            "csi": 1.0,
+            "pod": 1.0,
+            "far": 0.0
+          },
+          "Regime-Aware AI (Proposed)": {
+            "rmse": 1.16,
+            "mae": 0.67,
+            "bias": -0.06,
+            "csi": 0.991,
+            "pod": 0.991,
+            "far": 0.0
+          },
+          "Hybrid Regime Model": {
+            "rmse": 0.49,
+            "mae": 0.32,
+            "bias": 0.01,
+            "csi": 0.991,
+            "pod": 0.991,
+            "far": 0.0
+          }
+        }
+      },
+      {
+        "regime": "extreme_event",
+        "count": 78,
+        "obs_mean": 167.6,
+        "models": {
+          "Raw NWP": {
+            "rmse": 52.33,
+            "mae": 48.15,
+            "bias": -48.15,
+            "csi": 0.974,
+            "pod": 0.974,
+            "far": 0.0
+          },
+          "Global Bias Corrected": {
+            "rmse": 48.05,
+            "mae": 43.46,
+            "bias": -43.46,
+            "csi": 1.0,
+            "pod": 1.0,
+            "far": 0.0
+          },
+          "ML Post-Processor (No Regime)": {
+            "rmse": 3.83,
+            "mae": 2.3,
+            "bias": 0.24,
+            "csi": 1.0,
+            "pod": 1.0,
+            "far": 0.0
+          },
+          "Regime-Aware AI (Proposed)": {
+            "rmse": 3.55,
+            "mae": 2.21,
+            "bias": 0.75,
+            "csi": 1.0,
+            "pod": 1.0,
+            "far": 0.0
+          },
+          "Hybrid Regime Model": {
+            "rmse": 3.6,
+            "mae": 1.95,
+            "bias": 0.52,
+            "csi": 1.0,
+            "pod": 1.0,
+            "far": 0.0
+          }
+        }
+      },
+      {
+        "regime": "monsoon_depression",
+        "count": 46,
+        "obs_mean": 82.2,
+        "models": {
+          "Raw NWP": {
+            "rmse": 26.61,
+            "mae": 22.21,
+            "bias": -22.18,
+            "csi": 0.586,
+            "pod": 0.586,
+            "far": 0.0
+          },
+          "Global Bias Corrected": {
+            "rmse": 22.85,
+            "mae": 18.13,
+            "bias": -17.49,
+            "csi": 0.724,
+            "pod": 0.724,
+            "far": 0.0
+          },
+          "ML Post-Processor (No Regime)": {
+            "rmse": 1.1,
+            "mae": 0.79,
+            "bias": -0.14,
+            "csi": 1.0,
+            "pod": 1.0,
+            "far": 0.0
+          },
+          "Regime-Aware AI (Proposed)": {
+            "rmse": 3.44,
+            "mae": 2.04,
+            "bias": -0.45,
+            "csi": 1.0,
+            "pod": 1.0,
+            "far": 0.0
+          },
+          "Hybrid Regime Model": {
+            "rmse": 0.67,
+            "mae": 0.51,
+            "bias": -0.09,
+            "csi": 1.0,
+            "pod": 1.0,
+            "far": 0.0
+          }
+        }
+      },
+      {
+        "regime": "normal_monsoon",
+        "count": 1965,
+        "obs_mean": 7.4,
+        "models": {
+          "Raw NWP": {
+            "rmse": 5.0,
+            "mae": 3.03,
+            "bias": 0.63,
+            "csi": 0.333,
+            "pod": 0.385,
+            "far": 0.286
+          },
+          "Global Bias Corrected": {
+            "rmse": 7.27,
+            "mae": 6.12,
+            "bias": 5.32,
+            "csi": 0.467,
+            "pod": 0.538,
+            "far": 0.222
+          },
+          "ML Post-Processor (No Regime)": {
+            "rmse": 0.36,
+            "mae": 0.15,
+            "bias": -0.02,
+            "csi": 1.0,
+            "pod": 1.0,
+            "far": 0.0
+          },
+          "Regime-Aware AI (Proposed)": {
+            "rmse": 0.64,
+            "mae": 0.19,
+            "bias": -0.05,
+            "csi": 1.0,
+            "pod": 1.0,
+            "far": 0.0
+          },
+          "Hybrid Regime Model": {
+            "rmse": 0.24,
+            "mae": 0.1,
+            "bias": -0.01,
+            "csi": 0.923,
+            "pod": 0.923,
+            "far": 0.0
+          }
+        }
+      },
+      {
+        "regime": "orographic_rainfall",
+        "count": 387,
+        "obs_mean": 68.7,
+        "models": {
+          "Raw NWP": {
+            "rmse": 27.23,
+            "mae": 20.25,
+            "bias": -18.79,
+            "csi": 0.459,
+            "pod": 0.464,
+            "far": 0.023
+          },
+          "Global Bias Corrected": {
+            "rmse": 24.23,
+            "mae": 18.37,
+            "bias": -14.1,
+            "csi": 0.534,
+            "pod": 0.558,
+            "far": 0.073
+          },
+          "ML Post-Processor (No Regime)": {
+            "rmse": 0.95,
+            "mae": 0.57,
+            "bias": -0.05,
+            "csi": 0.994,
+            "pod": 0.994,
+            "far": 0.0
+          },
+          "Regime-Aware AI (Proposed)": {
+            "rmse": 1.32,
+            "mae": 0.86,
+            "bias": -0.16,
+            "csi": 0.983,
+            "pod": 0.983,
+            "far": 0.0
+          },
+          "Hybrid Regime Model": {
+            "rmse": 0.83,
+            "mae": 0.48,
+            "bias": 0.05,
+            "csi": 1.0,
+            "pod": 1.0,
+            "far": 0.0
+          }
+        }
+      }
+    ]
+  },
+  "fss_spatial_curve": {
+    "1": 0.998,
+    "3": 1.0,
+    "5": 1.0,
+    "7": 1.0
+  },
+  "district_forecasts": [
+    {
+      "district": "Mumbai City",
+      "state": "Maharashtra",
+      "lat": 18.96,
+      "lon": 72.82,
+      "elevation": 14,
+      "coast_dist_km": 2,
+      "zone": "West Coast",
+      "regime": "coastal_rainfall",
+      "raw_nwp_mean": 16.9,
+      "raw_nwp_max": 16.9,
+      "corrected_mean": 18.1,
+      "corrected_max": 18.1,
+      "corrected_p90": 18.1,
+      "observed_mean": 17.9,
+      "delta_correction": 1.2,
+      "p_heavy": 0.0,
+      "p_very_heavy": 0.0,
+      "p_extreme": 0.001,
+      "category": "Moderate"
+    },
+    {
+      "district": "Ratnagiri",
+      "state": "Maharashtra",
+      "lat": 16.99,
+      "lon": 73.3,
+      "elevation": 68,
+      "coast_dist_km": 5,
+      "zone": "West Coast",
+      "regime": "coastal_rainfall",
+      "raw_nwp_mean": 17.2,
+      "raw_nwp_max": 17.2,
+      "corrected_mean": 16.6,
+      "corrected_max": 16.6,
+      "corrected_p90": 16.6,
+      "observed_mean": 16.9,
+      "delta_correction": -0.6,
+      "p_heavy": 0.0,
+      "p_very_heavy": 0.0,
+      "p_extreme": 0.001,
+      "category": "Moderate"
+    },
+    {
+      "district": "Pune",
+      "state": "Maharashtra",
+      "lat": 18.52,
+      "lon": 73.85,
+      "elevation": 560,
+      "coast_dist_km": 120,
+      "zone": "Western Ghats Leeward",
+      "regime": "orographic_rainfall",
+      "raw_nwp_mean": 40.2,
+      "raw_nwp_max": 40.2,
+      "corrected_mean": 71.9,
+      "corrected_max": 71.9,
+      "corrected_p90": 71.9,
+      "observed_mean": 71.9,
+      "delta_correction": 31.7,
+      "p_heavy": 0.861,
+      "p_very_heavy": 0.001,
+      "p_extreme": 0.001,
+      "category": "Heavy"
+    },
+    {
+      "district": "Wayanad",
+      "state": "Kerala",
+      "lat": 11.68,
+      "lon": 76.13,
+      "elevation": 950,
+      "coast_dist_km": 65,
+      "zone": "Western Ghats Windward",
+      "regime": "coastal_rainfall",
+      "raw_nwp_mean": 25.7,
+      "raw_nwp_max": 42.6,
+      "corrected_mean": 27.0,
+      "corrected_max": 40.9,
+      "corrected_p90": 38.1,
+      "observed_mean": 26.8,
+      "delta_correction": 1.3,
+      "p_heavy": 0.001,
+      "p_very_heavy": 0.0,
+      "p_extreme": 0.001,
+      "category": "Moderate"
+    },
+    {
+      "district": "Kozhikode",
+      "state": "Kerala",
+      "lat": 11.25,
+      "lon": 75.78,
+      "elevation": 12,
+      "coast_dist_km": 1,
+      "zone": "West Coast",
+      "regime": "coastal_rainfall",
+      "raw_nwp_mean": 25.7,
+      "raw_nwp_max": 42.6,
+      "corrected_mean": 27.0,
+      "corrected_max": 40.9,
+      "corrected_p90": 38.1,
+      "observed_mean": 26.8,
+      "delta_correction": 1.3,
+      "p_heavy": 0.001,
+      "p_very_heavy": 0.0,
+      "p_extreme": 0.001,
+      "category": "Moderate"
+    },
+    {
+      "district": "Udupi",
+      "state": "Karnataka",
+      "lat": 13.34,
+      "lon": 74.74,
+      "elevation": 27,
+      "coast_dist_km": 4,
+      "zone": "West Coast",
+      "regime": "normal_monsoon",
+      "raw_nwp_mean": 4.7,
+      "raw_nwp_max": 4.7,
+      "corrected_mean": 5.9,
+      "corrected_max": 5.9,
+      "corrected_p90": 5.9,
+      "observed_mean": 5.9,
+      "delta_correction": 1.2,
+      "p_heavy": 0.0,
+      "p_very_heavy": 0.0,
+      "p_extreme": 0.001,
+      "category": "Light"
+    },
+    {
+      "district": "Uttara Kannada",
+      "state": "Karnataka",
+      "lat": 14.8,
+      "lon": 74.13,
+      "elevation": 350,
+      "coast_dist_km": 15,
+      "zone": "West Coast",
+      "regime": "normal_monsoon",
+      "raw_nwp_mean": 8.9,
+      "raw_nwp_max": 8.9,
+      "corrected_mean": 6.8,
+      "corrected_max": 6.8,
+      "corrected_p90": 6.8,
+      "observed_mean": 6.5,
+      "delta_correction": -2.1,
+      "p_heavy": 0.0,
+      "p_very_heavy": 0.0,
+      "p_extreme": 0.001,
+      "category": "Light"
+    },
+    {
+      "district": "Nagpur",
+      "state": "Maharashtra",
+      "lat": 21.14,
+      "lon": 79.08,
+      "elevation": 310,
+      "coast_dist_km": 540,
+      "zone": "Central India",
+      "regime": "normal_monsoon",
+      "raw_nwp_mean": 5.6,
+      "raw_nwp_max": 5.6,
+      "corrected_mean": 0.1,
+      "corrected_max": 0.1,
+      "corrected_p90": 0.1,
+      "observed_mean": 0.0,
+      "delta_correction": -5.5,
+      "p_heavy": 0.0,
+      "p_very_heavy": 0.0,
+      "p_extreme": 0.001,
+      "category": "No Rain"
+    },
+    {
+      "district": "Raipur",
+      "state": "Chhattisgarh",
+      "lat": 21.25,
+      "lon": 81.63,
+      "elevation": 298,
+      "coast_dist_km": 360,
+      "zone": "Central India",
+      "regime": "normal_monsoon",
+      "raw_nwp_mean": 11.4,
+      "raw_nwp_max": 11.4,
+      "corrected_mean": 0.1,
+      "corrected_max": 0.1,
+      "corrected_p90": 0.1,
+      "observed_mean": 0.0,
+      "delta_correction": -11.3,
+      "p_heavy": 0.0,
+      "p_very_heavy": 0.0,
+      "p_extreme": 0.001,
+      "category": "No Rain"
+    },
+    {
+      "district": "Jabalpur",
+      "state": "Madhya Pradesh",
+      "lat": 23.18,
+      "lon": 79.98,
+      "elevation": 411,
+      "coast_dist_km": 620,
+      "zone": "Central India",
+      "regime": "normal_monsoon",
+      "raw_nwp_mean": 8.7,
+      "raw_nwp_max": 8.7,
+      "corrected_mean": 0.1,
+      "corrected_max": 0.1,
+      "corrected_p90": 0.1,
+      "observed_mean": 0.0,
+      "delta_correction": -8.6,
+      "p_heavy": 0.0,
+      "p_very_heavy": 0.0,
+      "p_extreme": 0.001,
+      "category": "No Rain"
+    },
+    {
+      "district": "Bhopal",
+      "state": "Madhya Pradesh",
+      "lat": 23.25,
+      "lon": 77.41,
+      "elevation": 527,
+      "coast_dist_km": 580,
+      "zone": "Central India",
+      "regime": "normal_monsoon",
+      "raw_nwp_mean": 5.2,
+      "raw_nwp_max": 5.2,
+      "corrected_mean": 0.0,
+      "corrected_max": 0.0,
+      "corrected_p90": 0.0,
+      "observed_mean": 0.1,
+      "delta_correction": -5.2,
+      "p_heavy": 0.0,
+      "p_very_heavy": 0.0,
+      "p_extreme": 0.001,
+      "category": "No Rain"
+    },
+    {
+      "district": "Sambalpur",
+      "state": "Odisha",
+      "lat": 21.46,
+      "lon": 83.97,
+      "elevation": 150,
+      "coast_dist_km": 240,
+      "zone": "East Central India",
+      "regime": "normal_monsoon",
+      "raw_nwp_mean": 6.6,
+      "raw_nwp_max": 6.6,
+      "corrected_mean": 0.1,
+      "corrected_max": 0.1,
+      "corrected_p90": 0.1,
+      "observed_mean": 0.0,
+      "delta_correction": -6.5,
+      "p_heavy": 0.0,
+      "p_very_heavy": 0.0,
+      "p_extreme": 0.001,
+      "category": "No Rain"
+    },
+    {
+      "district": "Cuttack",
+      "state": "Odisha",
+      "lat": 20.46,
+      "lon": 85.88,
+      "elevation": 36,
+      "coast_dist_km": 50,
+      "zone": "East Coast",
+      "regime": "normal_monsoon",
+      "raw_nwp_mean": 0.0,
+      "raw_nwp_max": 0.0,
+      "corrected_mean": 0.0,
+      "corrected_max": 0.0,
+      "corrected_p90": 0.0,
+      "observed_mean": 0.0,
+      "delta_correction": 0.0,
+      "p_heavy": 0.0,
+      "p_very_heavy": 0.0,
+      "p_extreme": 0.001,
+      "category": "No Rain"
+    },
+    {
+      "district": "Balasore",
+      "state": "Odisha",
+      "lat": 21.49,
+      "lon": 86.93,
+      "elevation": 16,
+      "coast_dist_km": 15,
+      "zone": "East Coast",
+      "regime": "break_monsoon",
+      "raw_nwp_mean": 3.4,
+      "raw_nwp_max": 3.4,
+      "corrected_mean": 0.0,
+      "corrected_max": 0.0,
+      "corrected_p90": 0.0,
+      "observed_mean": 0.0,
+      "delta_correction": -3.4,
+      "p_heavy": 0.0,
+      "p_very_heavy": 0.0,
+      "p_extreme": 0.001,
+      "category": "No Rain"
+    },
+    {
+      "district": "Ranchi",
+      "state": "Jharkhand",
+      "lat": 23.34,
+      "lon": 85.3,
+      "elevation": 651,
+      "coast_dist_km": 320,
+      "zone": "East Central India",
+      "regime": "normal_monsoon",
+      "raw_nwp_mean": 13.9,
+      "raw_nwp_max": 13.9,
+      "corrected_mean": 5.1,
+      "corrected_max": 5.1,
+      "corrected_p90": 5.1,
+      "observed_mean": 7.0,
+      "delta_correction": -8.8,
+      "p_heavy": 0.0,
+      "p_very_heavy": 0.0,
+      "p_extreme": 0.001,
+      "category": "Light"
+    },
+    {
+      "district": "East Khasi Hills",
+      "state": "Meghalaya",
+      "lat": 25.57,
+      "lon": 91.88,
+      "elevation": 1496,
+      "coast_dist_km": 310,
+      "zone": "Northeast Hills",
+      "regime": "orographic_rainfall",
+      "raw_nwp_mean": 20.2,
+      "raw_nwp_max": 39.7,
+      "corrected_mean": 30.2,
+      "corrected_max": 60.4,
+      "corrected_p90": 54.4,
+      "observed_mean": 30.2,
+      "delta_correction": 10.1,
+      "p_heavy": 0.003,
+      "p_very_heavy": 0.0,
+      "p_extreme": 0.001,
+      "category": "Moderate"
+    },
+    {
+      "district": "Kamrup",
+      "state": "Assam",
+      "lat": 26.14,
+      "lon": 91.73,
+      "elevation": 55,
+      "coast_dist_km": 380,
+      "zone": "Brahmaputra Valley",
+      "regime": "orographic_rainfall",
+      "raw_nwp_mean": 20.2,
+      "raw_nwp_max": 39.7,
+      "corrected_mean": 30.2,
+      "corrected_max": 60.4,
+      "corrected_p90": 54.4,
+      "observed_mean": 30.2,
+      "delta_correction": 10.1,
+      "p_heavy": 0.003,
+      "p_very_heavy": 0.0,
+      "p_extreme": 0.001,
+      "category": "Moderate"
+    },
+    {
+      "district": "Dibrugarh",
+      "state": "Assam",
+      "lat": 27.47,
+      "lon": 94.91,
+      "elevation": 108,
+      "coast_dist_km": 680,
+      "zone": "Brahmaputra Valley",
+      "regime": "normal_monsoon",
+      "raw_nwp_mean": 0.0,
+      "raw_nwp_max": 0.0,
+      "corrected_mean": 0.0,
+      "corrected_max": 0.0,
+      "corrected_p90": 0.0,
+      "observed_mean": 0.0,
+      "delta_correction": 0.0,
+      "p_heavy": 0.0,
+      "p_very_heavy": 0.0,
+      "p_extreme": 0.001,
+      "category": "No Rain"
+    },
+    {
+      "district": "Kolkata",
+      "state": "West Bengal",
+      "lat": 22.57,
+      "lon": 88.36,
+      "elevation": 9,
+      "coast_dist_km": 75,
+      "zone": "Gangetic West Bengal",
+      "regime": "normal_monsoon",
+      "raw_nwp_mean": 2.8,
+      "raw_nwp_max": 2.8,
+      "corrected_mean": 0.0,
+      "corrected_max": 0.0,
+      "corrected_p90": 0.0,
+      "observed_mean": 0.0,
+      "delta_correction": -2.8,
+      "p_heavy": 0.0,
+      "p_very_heavy": 0.0,
+      "p_extreme": 0.001,
+      "category": "No Rain"
+    },
+    {
+      "district": "Darjeeling",
+      "state": "West Bengal",
+      "lat": 27.03,
+      "lon": 88.26,
+      "elevation": 2042,
+      "coast_dist_km": 510,
+      "zone": "Sub-Himalayan West Bengal",
+      "regime": "orographic_rainfall",
+      "raw_nwp_mean": 55.0,
+      "raw_nwp_max": 55.0,
+      "corrected_mean": 77.6,
+      "corrected_max": 77.6,
+      "corrected_p90": 77.6,
+      "observed_mean": 78.1,
+      "delta_correction": 22.6,
+      "p_heavy": 0.993,
+      "p_very_heavy": 0.0,
+      "p_extreme": 0.001,
+      "category": "Heavy"
+    },
+    {
+      "district": "Dehradun",
+      "state": "Uttarakhand",
+      "lat": 30.31,
+      "lon": 78.03,
+      "elevation": 640,
+      "coast_dist_km": 1150,
+      "zone": "Western Himalayan Foothills",
+      "regime": "normal_monsoon",
+      "raw_nwp_mean": 58.9,
+      "raw_nwp_max": 58.9,
+      "corrected_mean": 83.2,
+      "corrected_max": 83.2,
+      "corrected_p90": 83.2,
+      "observed_mean": 84.0,
+      "delta_correction": 24.3,
+      "p_heavy": 0.988,
+      "p_very_heavy": 0.0,
+      "p_extreme": 0.001,
+      "category": "Heavy"
+    },
+    {
+      "district": "Shimla",
+      "state": "Himachal Pradesh",
+      "lat": 31.1,
+      "lon": 77.17,
+      "elevation": 2206,
+      "coast_dist_km": 1280,
+      "zone": "Western Himalayas",
+      "regime": "normal_monsoon",
+      "raw_nwp_mean": 0.0,
+      "raw_nwp_max": 0.0,
+      "corrected_mean": 1.0,
+      "corrected_max": 1.0,
+      "corrected_p90": 1.0,
+      "observed_mean": 1.0,
+      "delta_correction": 1.0,
+      "p_heavy": 0.0,
+      "p_very_heavy": 0.0,
+      "p_extreme": 0.001,
+      "category": "No Rain"
+    },
+    {
+      "district": "New Delhi",
+      "state": "Delhi",
+      "lat": 28.61,
+      "lon": 77.2,
+      "elevation": 216,
+      "coast_dist_km": 1050,
+      "zone": "Northern Plains",
+      "regime": "normal_monsoon",
+      "raw_nwp_mean": 7.3,
+      "raw_nwp_max": 7.3,
+      "corrected_mean": 1.0,
+      "corrected_max": 1.0,
+      "corrected_p90": 1.0,
+      "observed_mean": 2.0,
+      "delta_correction": -6.3,
+      "p_heavy": 0.0,
+      "p_very_heavy": 0.0,
+      "p_extreme": 0.001,
+      "category": "No Rain"
+    },
+    {
+      "district": "Lucknow",
+      "state": "Uttar Pradesh",
+      "lat": 26.84,
+      "lon": 80.94,
+      "elevation": 123,
+      "coast_dist_km": 780,
+      "zone": "East Uttar Pradesh",
+      "regime": "normal_monsoon",
+      "raw_nwp_mean": 0.0,
+      "raw_nwp_max": 0.0,
+      "corrected_mean": 0.0,
+      "corrected_max": 0.0,
+      "corrected_p90": 0.0,
+      "observed_mean": 0.0,
+      "delta_correction": 0.0,
+      "p_heavy": 0.0,
+      "p_very_heavy": 0.0,
+      "p_extreme": 0.001,
+      "category": "No Rain"
+    },
+    {
+      "district": "Varanasi",
+      "state": "Uttar Pradesh",
+      "lat": 25.31,
+      "lon": 82.97,
+      "elevation": 81,
+      "coast_dist_km": 590,
+      "zone": "East Uttar Pradesh",
+      "regime": "normal_monsoon",
+      "raw_nwp_mean": 0.0,
+      "raw_nwp_max": 0.0,
+      "corrected_mean": 0.0,
+      "corrected_max": 0.0,
+      "corrected_p90": 0.0,
+      "observed_mean": 0.0,
+      "delta_correction": 0.0,
+      "p_heavy": 0.0,
+      "p_very_heavy": 0.0,
+      "p_extreme": 0.001,
+      "category": "No Rain"
+    },
+    {
+      "district": "Patna",
+      "state": "Bihar",
+      "lat": 25.59,
+      "lon": 85.13,
+      "elevation": 53,
+      "coast_dist_km": 460,
+      "zone": "Bihar Plains",
+      "regime": "normal_monsoon",
+      "raw_nwp_mean": 11.3,
+      "raw_nwp_max": 11.3,
+      "corrected_mean": 0.6,
+      "corrected_max": 0.6,
+      "corrected_p90": 0.6,
+      "observed_mean": 1.3,
+      "delta_correction": -10.7,
+      "p_heavy": 0.0,
+      "p_very_heavy": 0.0,
+      "p_extreme": 0.001,
+      "category": "No Rain"
+    },
+    {
+      "district": "Ahmedabad",
+      "state": "Gujarat",
+      "lat": 23.02,
+      "lon": 72.57,
+      "elevation": 53,
+      "coast_dist_km": 75,
+      "zone": "Gujarat Plains",
+      "regime": "normal_monsoon",
+      "raw_nwp_mean": 13.4,
+      "raw_nwp_max": 13.4,
+      "corrected_mean": 0.0,
+      "corrected_max": 0.0,
+      "corrected_p90": 0.0,
+      "observed_mean": 0.0,
+      "delta_correction": -13.4,
+      "p_heavy": 0.0,
+      "p_very_heavy": 0.0,
+      "p_extreme": 0.001,
+      "category": "No Rain"
+    },
+    {
+      "district": "Surat",
+      "state": "Gujarat",
+      "lat": 21.17,
+      "lon": 72.83,
+      "elevation": 13,
+      "coast_dist_km": 18,
+      "zone": "Gujarat Coast",
+      "regime": "normal_monsoon",
+      "raw_nwp_mean": 0.0,
+      "raw_nwp_max": 0.0,
+      "corrected_mean": 0.0,
+      "corrected_max": 0.0,
+      "corrected_p90": 0.0,
+      "observed_mean": 0.0,
+      "delta_correction": 0.0,
+      "p_heavy": 0.0,
+      "p_very_heavy": 0.0,
+      "p_extreme": 0.001,
+      "category": "No Rain"
+    },
+    {
+      "district": "Jaipur",
+      "state": "Rajasthan",
+      "lat": 26.91,
+      "lon": 75.78,
+      "elevation": 431,
+      "coast_dist_km": 680,
+      "zone": "East Rajasthan",
+      "regime": "normal_monsoon",
+      "raw_nwp_mean": 0.0,
+      "raw_nwp_max": 0.0,
+      "corrected_mean": 0.0,
+      "corrected_max": 0.0,
+      "corrected_p90": 0.0,
+      "observed_mean": 0.0,
+      "delta_correction": 0.0,
+      "p_heavy": 0.0,
+      "p_very_heavy": 0.0,
+      "p_extreme": 0.001,
+      "category": "No Rain"
+    },
+    {
+      "district": "Jodhpur",
+      "state": "Rajasthan",
+      "lat": 26.29,
+      "lon": 73.01,
+      "elevation": 231,
+      "coast_dist_km": 490,
+      "zone": "West Rajasthan",
+      "regime": "normal_monsoon",
+      "raw_nwp_mean": 0.2,
+      "raw_nwp_max": 0.2,
+      "corrected_mean": 0.0,
+      "corrected_max": 0.0,
+      "corrected_p90": 0.0,
+      "observed_mean": 0.0,
+      "delta_correction": -0.2,
+      "p_heavy": 0.0,
+      "p_very_heavy": 0.0,
+      "p_extreme": 0.001,
+      "category": "No Rain"
+    },
+    {
+      "district": "Bengaluru Urban",
+      "state": "Karnataka",
+      "lat": 12.97,
+      "lon": 77.59,
+      "elevation": 920,
+      "coast_dist_km": 280,
+      "zone": "South Interior Karnataka",
+      "regime": "normal_monsoon",
+      "raw_nwp_mean": 0.0,
+      "raw_nwp_max": 0.0,
+      "corrected_mean": 0.0,
+      "corrected_max": 0.0,
+      "corrected_p90": 0.0,
+      "observed_mean": 0.0,
+      "delta_correction": 0.0,
+      "p_heavy": 0.0,
+      "p_very_heavy": 0.0,
+      "p_extreme": 0.001,
+      "category": "No Rain"
+    },
+    {
+      "district": "Hyderabad",
+      "state": "Telangana",
+      "lat": 17.38,
+      "lon": 78.48,
+      "elevation": 542,
+      "coast_dist_km": 290,
+      "zone": "Telangana Plateau",
+      "regime": "normal_monsoon",
+      "raw_nwp_mean": 0.0,
+      "raw_nwp_max": 0.0,
+      "corrected_mean": 0.0,
+      "corrected_max": 0.0,
+      "corrected_p90": 0.0,
+      "observed_mean": 0.0,
+      "delta_correction": 0.0,
+      "p_heavy": 0.0,
+      "p_very_heavy": 0.0,
+      "p_extreme": 0.001,
+      "category": "No Rain"
+    },
+    {
+      "district": "Visakhapatnam",
+      "state": "Andhra Pradesh",
+      "lat": 17.68,
+      "lon": 83.21,
+      "elevation": 45,
+      "coast_dist_km": 2,
+      "zone": "Coastal Andhra",
+      "regime": "normal_monsoon",
+      "raw_nwp_mean": 3.7,
+      "raw_nwp_max": 3.7,
+      "corrected_mean": 0.0,
+      "corrected_max": 0.0,
+      "corrected_p90": 0.0,
+      "observed_mean": 0.0,
+      "delta_correction": -3.7,
+      "p_heavy": 0.0,
+      "p_very_heavy": 0.0,
+      "p_extreme": 0.001,
+      "category": "No Rain"
+    },
+    {
+      "district": "Chennai",
+      "state": "Tamil Nadu",
+      "lat": 13.08,
+      "lon": 80.27,
+      "elevation": 7,
+      "coast_dist_km": 1,
+      "zone": "Tamil Nadu Coast",
+      "regime": "normal_monsoon",
+      "raw_nwp_mean": 0.0,
+      "raw_nwp_max": 0.0,
+      "corrected_mean": 0.0,
+      "corrected_max": 0.0,
+      "corrected_p90": 0.0,
+      "observed_mean": 0.0,
+      "delta_correction": 0.0,
+      "p_heavy": 0.0,
+      "p_very_heavy": 0.0,
+      "p_extreme": 0.001,
+      "category": "No Rain"
+    },
+    {
+      "district": "Coimbatore",
+      "state": "Tamil Nadu",
+      "lat": 11.01,
+      "lon": 76.96,
+      "elevation": 411,
+      "coast_dist_km": 120,
+      "zone": "Tamil Nadu Interior",
+      "regime": "normal_monsoon",
+      "raw_nwp_mean": 0.0,
+      "raw_nwp_max": 0.0,
+      "corrected_mean": 0.0,
+      "corrected_max": 0.0,
+      "corrected_p90": 0.0,
+      "observed_mean": 0.0,
+      "delta_correction": 0.0,
+      "p_heavy": 0.0,
+      "p_very_heavy": 0.0,
+      "p_extreme": 0.001,
+      "category": "No Rain"
+    }
+  ],
+  "sample_explanations": [
+    {
+      "district": "Mumbai City",
+      "state": "Maharashtra",
+      "raw_nwp_rainfall": 16.9,
+      "corrected_rainfall": 18.1,
+      "delta": 1.2,
+      "regime": "coastal_rainfall",
+      "attribution_factors": [
+        {
+          "factor": "High Ambient Moisture",
+          "observation": "Relative humidity is 99% (>85%)",
+          "impact": "Increases precipitation efficiency and cloud condensation rate",
+          "direction": "positive",
+          "weight": 0.22
+        },
+        {
+          "factor": "Regime Specialization (Coastal Rainfall)",
+          "observation": "Classified regime: coastal_rainfall",
+          "impact": "Coastal moisture convergence compensates for land-sea transition boundary errors.",
+          "direction": "positive",
+          "weight": 0.2
+        }
+      ],
+      "scientific_disclaimer": "Attribution factors represent statistical model feature contributions and do not imply direct physical causality."
+    },
+    {
+      "district": "Ratnagiri",
+      "state": "Maharashtra",
+      "raw_nwp_rainfall": 17.2,
+      "corrected_rainfall": 16.6,
+      "delta": -0.6,
+      "regime": "coastal_rainfall",
+      "attribution_factors": [
+        {
+          "factor": "High Ambient Moisture",
+          "observation": "Relative humidity is 99% (>85%)",
+          "impact": "Increases precipitation efficiency and cloud condensation rate",
+          "direction": "neutral",
+          "weight": 0.22
+        },
+        {
+          "factor": "Regime Specialization (Coastal Rainfall)",
+          "observation": "Classified regime: coastal_rainfall",
+          "impact": "Coastal moisture convergence compensates for land-sea transition boundary errors.",
+          "direction": "negative",
+          "weight": 0.2
+        }
+      ],
+      "scientific_disclaimer": "Attribution factors represent statistical model feature contributions and do not imply direct physical causality."
+    },
+    {
+      "district": "Pune",
+      "state": "Maharashtra",
+      "raw_nwp_rainfall": 40.2,
+      "corrected_rainfall": 71.9,
+      "delta": 31.7,
+      "regime": "orographic_rainfall",
+      "attribution_factors": [
+        {
+          "factor": "Orographic Enhancement",
+          "observation": "Elevation is 560m with steep terrain slope",
+          "impact": "Mechanical updraft forces condensation unrepresented by coarse NWP grid",
+          "direction": "positive",
+          "weight": 0.32
+        },
+        {
+          "factor": "High Ambient Moisture",
+          "observation": "Relative humidity is 93% (>85%)",
+          "impact": "Increases precipitation efficiency and cloud condensation rate",
+          "direction": "positive",
+          "weight": 0.22
+        },
+        {
+          "factor": "Regime Specialization (Orographic Rainfall)",
+          "observation": "Classified regime: orographic_rainfall",
+          "impact": "Sub-grid orographic enhancement is consistently adjusted upwards for mountainous terrain.",
+          "direction": "positive",
+          "weight": 0.2
+        }
+      ],
+      "scientific_disclaimer": "Attribution factors represent statistical model feature contributions and do not imply direct physical causality."
+    },
+    {
+      "district": "Wayanad",
+      "state": "Kerala",
+      "raw_nwp_rainfall": 8.8,
+      "corrected_rainfall": 40.9,
+      "delta": 32.1,
+      "regime": "coastal_rainfall",
+      "attribution_factors": [
+        {
+          "factor": "Orographic Enhancement",
+          "observation": "Elevation is 950m with steep terrain slope",
+          "impact": "Mechanical updraft forces condensation unrepresented by coarse NWP grid",
+          "direction": "positive",
+          "weight": 0.32
+        },
+        {
+          "factor": "High Ambient Moisture",
+          "observation": "Relative humidity is 97% (>85%)",
+          "impact": "Increases precipitation efficiency and cloud condensation rate",
+          "direction": "positive",
+          "weight": 0.22
+        },
+        {
+          "factor": "Regime Specialization (Coastal Rainfall)",
+          "observation": "Classified regime: coastal_rainfall",
+          "impact": "Coastal moisture convergence compensates for land-sea transition boundary errors.",
+          "direction": "positive",
+          "weight": 0.2
+        }
+      ],
+      "scientific_disclaimer": "Attribution factors represent statistical model feature contributions and do not imply direct physical causality."
+    },
+    {
+      "district": "Kozhikode",
+      "state": "Kerala",
+      "raw_nwp_rainfall": 42.6,
+      "corrected_rainfall": 40.9,
+      "delta": -1.7,
+      "regime": "coastal_rainfall",
+      "attribution_factors": [
+        {
+          "factor": "High Ambient Moisture",
+          "observation": "Relative humidity is 98% (>85%)",
+          "impact": "Increases precipitation efficiency and cloud condensation rate",
+          "direction": "neutral",
+          "weight": 0.22
+        },
+        {
+          "factor": "Vigorous Dynamic Updraft",
+          "observation": "Vertical velocity (omega) is -0.33 Pa/s",
+          "impact": "Strong vertical ascent sustains persistent rainbands",
+          "direction": "positive",
+          "weight": 0.2
+        },
+        {
+          "factor": "Regime Specialization (Coastal Rainfall)",
+          "observation": "Classified regime: coastal_rainfall",
+          "impact": "Coastal moisture convergence compensates for land-sea transition boundary errors.",
+          "direction": "negative",
+          "weight": 0.2
+        }
+      ],
+      "scientific_disclaimer": "Attribution factors represent statistical model feature contributions and do not imply direct physical causality."
+    },
+    {
+      "district": "Udupi",
+      "state": "Karnataka",
+      "raw_nwp_rainfall": 4.7,
+      "corrected_rainfall": 5.9,
+      "delta": 1.2,
+      "regime": "normal_monsoon",
+      "attribution_factors": [
+        {
+          "factor": "High Ambient Moisture",
+          "observation": "Relative humidity is 91% (>85%)",
+          "impact": "Increases precipitation efficiency and cloud condensation rate",
+          "direction": "positive",
+          "weight": 0.22
+        },
+        {
+          "factor": "Regime Specialization (Normal Monsoon)",
+          "observation": "Classified regime: normal_monsoon",
+          "impact": "Background seasonal climatology applies minimal global nudging.",
+          "direction": "positive",
+          "weight": 0.2
+        }
+      ],
+      "scientific_disclaimer": "Attribution factors represent statistical model feature contributions and do not imply direct physical causality."
+    }
+  ]
+}

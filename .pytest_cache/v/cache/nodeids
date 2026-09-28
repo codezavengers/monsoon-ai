@@ -1,0 +1,11 @@
+[
+  "tests/test_rainfall_ai.py::test_categorical_metrics",
+  "tests/test_rainfall_ai.py::test_data_validation",
+  "tests/test_rainfall_ai.py::test_deterministic_metrics",
+  "tests/test_rainfall_ai.py::test_district_aggregation",
+  "tests/test_rainfall_ai.py::test_feature_engineering",
+  "tests/test_rainfall_ai.py::test_fractions_skill_score_spatial",
+  "tests/test_rainfall_ai.py::test_negative_rainfall_prevention",
+  "tests/test_rainfall_ai.py::test_probabilistic_bounds",
+  "tests/test_rainfall_ai.py::test_regime_classification_rules"
+]

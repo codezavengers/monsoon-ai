@@ -1,0 +1,80 @@
+# Configuration for Regime-Aware AI Post-Processing of Monsoon Rainfall Forecasts
+# Problem Statement ID: 26080
+
+project:
+  name: "regime-aware-rainfall-ai"
+  version: "1.0.0"
+  random_seed: 42
+  description: "AI-driven post-processing of Indian monsoon NWP forecasts using weather regime classification"
+
+data:
+  raw_dir: "data/raw"
+  processed_dir: "data/processed"
+  synthetic_dir: "data/synthetic"
+  external_dir: "data/external"
+  results_dir: "results"
+  models_dir: "models"
+  
+  rainfall_variable: "rainfall_nwp"
+  observation_variable: "rainfall_obs"
+  
+  # Temporal parameters
+  monsoon_months: [6, 7, 8, 9] # June to September (JJAS)
+  train_years: [2018, 2019, 2020, 2021, 2022]
+  val_years: [2023]
+  test_years: [2024]
+
+thresholds:
+  heavy: 64.5       # IMD Heavy Rainfall threshold (mm/day)
+  very_heavy: 115.6  # IMD Very Heavy Rainfall threshold (mm/day)
+  extreme: 204.5     # IMD Extremely Heavy Rainfall threshold (mm/day)
+  light_rain: 2.5    # Minimum threshold to be considered rainy day
+  moderate_rain: 15.6
+
+regimes:
+  list:
+    - "normal_monsoon"
+    - "active_monsoon"
+    - "break_monsoon"
+    - "monsoon_depression"
+    - "coastal_rainfall"
+    - "orographic_rainfall"
+    - "western_disturbance"
+    - "extreme_event"
+  display_names:
+    normal_monsoon: "Normal / Background Monsoon"
+    active_monsoon: "Active Monsoon"
+    break_monsoon: "Break Monsoon"
+    monsoon_depression: "Monsoon Low / Depression"
+    coastal_rainfall: "Coastal Rainfall"
+    orographic_rainfall: "Orographic Rainfall"
+    western_disturbance: "Western Disturbance"
+    extreme_event: "Extreme Convective Event"
+
+model:
+  classifier_type: "random_forest" # options: "rule_based", "random_forest", "gradient_boosting"
+  correction_model: "regime_rf"    # options: "linear", "random_forest", "gradient_boosting"
+  n_estimators: 100
+  max_depth: 12
+  log_transform: true              # Apply log1p to rainfall for skewed distribution
+  probability_calibration: "sigmoid"
+
+verification:
+  fss_windows: [1, 3, 5, 7]
+  fss_threshold: 64.5
+  metrics:
+    - "rmse"
+    - "mae"
+    - "bias"
+    - "csi"
+    - "ets"
+    - "pod"
+    - "far"
+    - "fss"
+
+dashboard:
+  title: "Regime-Aware AI Post-Processing of Monsoon Rainfall Forecasts"
+  subtitle: "AI-driven correction of NWP rainfall forecasts using weather-regime classification"
+  default_date: "2024-07-15"
+  map_center: [22.5, 82.0]
+  map_zoom: 4.5
