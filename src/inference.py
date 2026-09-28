@@ -14,6 +14,7 @@ import os
 import json
 import argparse
 import pickle
+import datetime
 import numpy as np
 
 # Add project root to sys.path
@@ -200,6 +201,44 @@ def run_single_inference(input_record: dict, models_dir: str = "models") -> dict
         regime=pred_regime
     )
 
+    mode = str(input_record.get("mode", os.environ.get("MODE", "DEMO"))).upper()
+    provider = str(input_record.get("provider", "GFS_0.25deg"))
+    cycle = str(input_record.get("cycle", "00Z"))
+    
+    # Calculate forecast valid time
+    now_dt = datetime.datetime.now(datetime.timezone.utc)
+    valid_dt = now_dt + datetime.timedelta(hours=lead_time)
+    valid_time_str = input_record.get("valid_time", valid_dt.strftime("%Y-%m-%dT%H:%M:%SZ"))
+
+    # Determine if models are trained or fallback heuristic is active
+    using_ml = (
+        reg_ml is not None and getattr(reg_ml, "is_trained", False) and
+        reg_clf is not None and getattr(reg_clf, "is_trained", False)
+    )
+    fallback_used = not using_ml
+
+    if mode == "REAL":
+        data_source = input_record.get("data_source", f"Operational {provider} (Real Feed)")
+        inference_status = "SUCCESS" if using_ml else "CONFIGURATION_REQUIRED"
+        if not using_ml:
+            return {
+                "success": False,
+                "error": "CONFIGURATION_REQUIRED: Authoritative trained ML models not loaded for REAL mode. Please run training pipeline first.",
+                "mode": "REAL",
+                "data_source": data_source,
+                "provider": provider,
+                "cycle": cycle,
+                "valid_time": valid_time_str,
+                "lead_time": lead_time,
+                "lead_time_hours": lead_time,
+                "model_version": "2.1.0-regime-aware",
+                "fallback_used": True,
+                "inference_status": "CONFIGURATION_REQUIRED"
+            }
+    else:
+        data_source = input_record.get("data_source", f"Synthetic {provider} Benchmark (JJAS 2018-2024)")
+        inference_status = "SUCCESS"
+
     # Categorization according to IMD standards
     if corrected_rain >= 204.5:
         category = "Extremely Heavy"
@@ -216,10 +255,19 @@ def run_single_inference(input_record: dict, models_dir: str = "models") -> dict
 
     return {
         "success": True,
+        "mode": mode,
+        "data_source": data_source,
+        "provider": provider,
+        "cycle": cycle,
+        "valid_time": valid_time_str,
+        "lead_time": lead_time,
+        "lead_time_hours": lead_time,
+        "model_version": "2.1.0-regime-aware",
+        "fallback_used": fallback_used,
+        "inference_status": inference_status,
         "district": district_name,
         "state": state_name,
         "coordinates": {"lat": lat, "lon": lon},
-        "lead_time_hours": lead_time,
         "raw_nwp_rainfall": rain,
         "corrected_rainfall": corrected_rain,
         "delta_correction": delta_val,

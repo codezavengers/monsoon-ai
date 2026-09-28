@@ -59,7 +59,7 @@ class GFSAdapter(BaseNWPAdapter):
         lead_time_hours: int,
         init_time: Optional[datetime.datetime]
     ) -> Dict[str, Any]:
-        """Reads NetCDF/GRIB2 via xarray and extracts Indian domain."""
+        """Reads NetCDF/GRIB2 via xarray, extracts exact lead time, and subsets to Indian domain."""
         ds = xr.open_dataset(filepath)
 
         # Standardize coordinate names
@@ -80,44 +80,89 @@ class GFSAdapter(BaseNWPAdapter):
         sub_lons = lons[lon_mask]
         self.validate_spatial_domain(sub_lats, sub_lons)
 
+        # Lead time / Step index selection based on actual metadata
+        lead_coord = next((c for c in ["step", "lead_time", "forecast_period", "lead", "time"] if c in ds.coords), None)
+        step_idx = 0
+        actual_lead_h = lead_time_hours
+
+        if lead_coord and ds[lead_coord].size > 1:
+            coord_vals = ds[lead_coord].values
+            # Convert timedelta / hours to integer hours
+            hours_list = []
+            for val in coord_vals:
+                if isinstance(val, np.timedelta64):
+                    hours_list.append(float(val / np.timedelta64(1, "h")))
+                elif hasattr(val, "total_seconds"):
+                    hours_list.append(val.total_seconds() / 3600.0)
+                else:
+                    try:
+                        hours_list.append(float(val))
+                    except (ValueError, TypeError):
+                        hours_list.append(0.0)
+
+            # Match exact or nearest lead time
+            hours_arr = np.array(hours_list)
+            diffs = np.abs(hours_arr - lead_time_hours)
+            step_idx = int(np.argmin(diffs))
+            actual_lead_h = int(hours_arr[step_idx])
+        elif lead_coord and ds[lead_coord].size == 1:
+            step_idx = 0
+
         # GFS variable translation mapping
         var_mapping = {
-            "rainfall_nwp": ["apcp", "prate", "precip", "total_precipitation"],
+            "rainfall_nwp": ["apcp", "prate", "precip", "total_precipitation", "tp"],
             "temperature": ["tmp2m", "t2m", "tmp_2m", "temperature"],
             "humidity": ["rh2m", "r2", "rh_2m", "humidity"],
             "pressure": ["prmsl", "mslma", "pres_msl", "mslp"],
             "cape": ["cape", "capesfc"],
-            "vertical_velocity": ["vvel500", "vvel", "omega"],
+            "vertical_velocity": ["vvel500", "vvel", "omega500", "omega"],
             "geopotential_height": ["hgt500", "gh", "z500"],
-            "wind_u": ["u10", "ugrd10m"],
-            "wind_v": ["v10", "vgrd10m"]
+            "wind_u": ["u10", "ugrd10m", "10u"],
+            "wind_v": ["v10", "vgrd10m", "10v"],
+            "u_wind_850": ["u850", "ugrd850mb", "u_850"],
+            "v_wind_850": ["v850", "vgrd850mb", "v_850"],
+            "humidity_850": ["rh850", "r850mb", "rh_850"]
         }
 
         canonical_vars = {}
+        var_attrs = {}
+
         for canonical, candidates in var_mapping.items():
             for cand in candidates:
                 if cand in ds.variables:
-                    data = ds[cand].values
-                    # Extract lead time slice if 3D/4D
+                    da = ds[cand]
+                    var_attrs[canonical] = dict(da.attrs)
+                    data = da.values
+
+                    # Extract lead time slice if 3D/4D using validated step_idx
                     if data.ndim == 3:
-                        data = data[-1] # Latest lead time
+                        idx = min(step_idx, data.shape[0] - 1)
+                        data = data[idx]
                     elif data.ndim == 4:
-                        data = data[-1, 0]
+                        idx = min(step_idx, data.shape[0] - 1)
+                        data = data[idx, 0]
+
                     # Subset spatially
                     canonical_vars[canonical] = data[np.ix_(lat_mask, lon_mask)]
                     break
 
-        # Compute wind speed and direction if u and v are present
+        # Compute 10m wind speed and direction if u and v are present
         if "wind_u" in canonical_vars and "wind_v" in canonical_vars:
             u = canonical_vars["wind_u"]
             v = canonical_vars["wind_v"]
             canonical_vars["wind_speed"] = np.sqrt(u**2 + v**2)
             canonical_vars["wind_direction"] = (np.degrees(np.arctan2(-u, -v)) + 360.0) % 360.0
 
-        warnings = self.validate_variables(canonical_vars)
+        # Compute 850hPa wind speed if 850hPa components are present
+        if "u_wind_850" in canonical_vars and "v_wind_850" in canonical_vars:
+            u850 = canonical_vars["u_wind_850"]
+            v850 = canonical_vars["v_wind_850"]
+            canonical_vars["wind_speed_850"] = np.sqrt(u850**2 + v850**2)
 
-        now = init_time or datetime.datetime.utcnow()
-        valid = now + datetime.timedelta(hours=lead_time_hours)
+        warnings = self.validate_variables(canonical_vars, var_attrs)
+
+        now = init_time or datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None)
+        valid = now + datetime.timedelta(hours=actual_lead_h)
 
         return {
             "provider": self.provider_name,
@@ -128,9 +173,12 @@ class GFSAdapter(BaseNWPAdapter):
                 "source_file": os.path.basename(filepath),
                 "init_time": now.isoformat(),
                 "valid_time": valid.isoformat(),
-                "lead_time_hours": lead_time_hours,
+                "lead_time_hours": actual_lead_h,
+                "requested_lead_time_hours": lead_time_hours,
+                "step_index": step_idx,
                 "warnings": warnings,
-                "spatial_resolution": f"{self.resolution_deg}° x {self.resolution_deg}°"
+                "spatial_resolution": f"{self.resolution_deg}° x {self.resolution_deg}°",
+                "variable_attributes": {k: v for k, v in var_attrs.items() if v}
             }
         }
 

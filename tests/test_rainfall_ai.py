@@ -435,4 +435,76 @@ def test_operational_pipeline_runner_cycle():
     assert "spatial_verification_fss" in cycle_out
     assert 5 in cycle_out["spatial_verification_fss"]
     assert "district_aggregates" in cycle_out
+    # Check 9 mandatory operational fields
+    for field in ["mode", "data_source", "provider", "cycle", "valid_time", "lead_time", "model_version", "fallback_used", "inference_status"]:
+        assert field in cycle_out, f"Missing required field {field} in cycle_out"
+
+# --- 15. STRICT DEMO VS REAL MODE SEPARATION ---
+
+def test_real_mode_strict_data_unavailable():
+    """Verify that REAL mode strictly raises DATA_UNAVAILABLE when input files are missing."""
+    from src.data.loaders import build_real_monsoon_dataset
+    from src.operational.pipeline_runner import OperationalPipelineRunner
+    
+    # 1. Dataset builder must refuse synthetic fallback in REAL mode
+    with pytest.raises(NWPValidationError) as exc_info:
+        build_real_monsoon_dataset(
+            nwp_dir="data/nonexistent_nwp",
+            obs_dir="data/nonexistent_obs"
+        )
+    assert "DATA_UNAVAILABLE" in str(exc_info.value)
+
+    # 2. Operational runner in REAL mode must raise error when real NWP is missing
+    runner_real = OperationalPipelineRunner(mode="real")
+    with pytest.raises(NWPValidationError) as exc_info:
+        runner_real.run_cycle(
+            cycle_date=datetime.date(2024, 7, 15),
+            cycle_hour="00Z",
+            lead_time_hours=24,
+            provider="GFS"
+        )
+    assert "DATA_UNAVAILABLE" in str(exc_info.value)
+
+def test_inference_metadata_all_9_fields():
+    """Verify all 9 mandatory metadata fields are present in single inference."""
+    sample_input = {
+        "latitude": 18.96,
+        "longitude": 72.82,
+        "rainfall": 65.0,
+        "lead_time_hours": 48
+    }
+    result = run_single_inference(sample_input)
+    mandatory_fields = [
+        "mode", "data_source", "provider", "cycle", "valid_time",
+        "lead_time", "model_version", "fallback_used", "inference_status"
+    ]
+    for field in mandatory_fields:
+        assert field in result, f"Field '{field}' missing from inference output"
+    assert result["mode"] == "DEMO"
+    assert result["lead_time"] == 48
+    assert result["inference_status"] == "SUCCESS"
+
+def test_flux_unit_conversion_and_wind_separation():
+    """Verify precipitation flux accumulation conversion and distinct 10m vs 850hPa winds."""
+    gfs = GFSAdapter()
+    
+    # 1. Flux conversion: 0.0005 kg m-2 s-1 * 86400 = 43.2 mm/day
+    flux_data = np.array([[0.0005]])
+    norm_rain, warn = gfs.normalize_variable_with_metadata(
+        "rainfall_nwp", flux_data, attrs={"units": "kg m-2 s-1"}
+    )
+    assert norm_rain[0, 0] == pytest.approx(43.2, abs=0.1)
+
+    # 2. Verify 850 hPa winds are not silently imputed from 10m winds
+    vars_only_10m = {
+        "rainfall_nwp": np.array([[10.0]]),
+        "wind_u": np.array([[5.0]]),
+        "wind_v": np.array([[8.0]])
+    }
+    gfs.validate_variables(vars_only_10m)
+    assert "u_wind_850" not in vars_only_10m
+    assert "v_wind_850" not in vars_only_10m
+    assert "wind_speed_850" not in vars_only_10m
+    assert "wind_speed" in vars_only_10m
+
 

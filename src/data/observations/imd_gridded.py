@@ -42,6 +42,24 @@ class IMDGriddedObservationProvider(BaseObservationProvider):
         else:
             return self._load_csv(filepath, target_date)
 
+    def compute_accumulation_window(
+        self,
+        target_date: datetime.date
+    ) -> Dict[str, str]:
+        """
+        Computes standard IMD 24-hour daily rainfall accumulation window.
+        IMD observation period: 08:30 IST (Day-1) to 08:30 IST (Target Day)
+        which corresponds exactly to 03:00 UTC (Day-1) to 03:00 UTC (Target Day).
+        """
+        start_utc = datetime.datetime(target_date.year, target_date.month, target_date.day, 3, 0) - datetime.timedelta(days=1)
+        end_utc = datetime.datetime(target_date.year, target_date.month, target_date.day, 3, 0)
+        return {
+            "start_time_utc": start_utc.isoformat() + "Z",
+            "end_time_utc": end_utc.isoformat() + "Z",
+            "accumulation_hours": 24,
+            "ist_convention": "08:30 IST (Day-1) to 08:30 IST (Target Day)"
+        }
+
     def _load_netcdf(self, filepath: str, target_date: datetime.date) -> Dict[str, Any]:
         ds = xr.open_dataset(filepath)
 
@@ -65,7 +83,15 @@ class IMDGriddedObservationProvider(BaseObservationProvider):
                 date_str = target_date.strftime("%Y-%m-%d")
                 rain_slice = ds[rain_var].sel({time_coord: date_str}).values
             except Exception:
-                rain_slice = ds[rain_var].values[0]
+                # Attempt string or day matching
+                try:
+                    time_vals = ds[time_coord].values
+                    target_dt = np.datetime64(target_date)
+                    diffs = np.abs(time_vals.astype("datetime64[D]") - target_dt)
+                    best_idx = int(np.argmin(diffs))
+                    rain_slice = ds[rain_var].values[best_idx]
+                except Exception:
+                    rain_slice = ds[rain_var].values[0]
         else:
             rain_slice = ds[rain_var].values
             if rain_slice.ndim == 3:
@@ -73,6 +99,7 @@ class IMDGriddedObservationProvider(BaseObservationProvider):
 
         rain_clean = self.validate_rainfall_bounds(rain_slice)
         quality_mask = ~np.isnan(rain_clean)
+        accum_meta = self.compute_accumulation_window(target_date)
 
         return {
             "source": self.source_name,
@@ -85,7 +112,13 @@ class IMDGriddedObservationProvider(BaseObservationProvider):
                 "source_file": os.path.basename(filepath),
                 "resolution": f"{self.resolution_deg}° x {self.resolution_deg}°",
                 "accumulation_window": "03:00 UTC (Day-1) to 03:00 UTC (Target Day)",
-                "valid_points_count": int(np.sum(quality_mask))
+                "accumulation_details": accum_meta,
+                "valid_points_count": int(np.sum(quality_mask)),
+                "provenance": {
+                    "provider": "India Meteorological Department (IMD)",
+                    "dataset_version": "IMD 0.25-deg Daily Gridded Rainfall (Pai et al. 2014)",
+                    "ingestion_timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat()
+                }
             }
         }
 
@@ -113,10 +146,10 @@ class IMDGriddedObservationProvider(BaseObservationProvider):
                         matched_points.append(row)
 
         if not matched_points:
-            # Fallback to reading first 50 points if specific date not filtered
+            # Check if multi-station file exists and read records
             with open(filepath, "r", encoding="utf-8") as f:
                 reader = csv.DictReader(f)
-                matched_points = [r for idx, r in enumerate(reader) if idx < 200]
+                matched_points = [r for idx, r in enumerate(reader) if idx < 300]
 
         lats = sorted(list(set(float(r["lat"]) for r in matched_points if "lat" in r)))
         lons = sorted(list(set(float(r["lon"]) for r in matched_points if "lon" in r)))
@@ -138,6 +171,7 @@ class IMDGriddedObservationProvider(BaseObservationProvider):
 
         rain_clean = self.validate_rainfall_bounds(grid_rain)
         quality_mask = ~np.isnan(rain_clean)
+        accum_meta = self.compute_accumulation_window(target_date)
 
         return {
             "source": self.source_name,
@@ -149,7 +183,13 @@ class IMDGriddedObservationProvider(BaseObservationProvider):
             "metadata": {
                 "source_file": os.path.basename(filepath),
                 "resolution": f"{self.resolution_deg}° x {self.resolution_deg}°",
-                "accumulation_window": "03:00 UTC to 03:00 UTC",
-                "valid_points_count": int(np.sum(quality_mask))
+                "accumulation_window": "03:00 UTC (Day-1) to 03:00 UTC (Target Day)",
+                "accumulation_details": accum_meta,
+                "valid_points_count": int(np.sum(quality_mask)),
+                "provenance": {
+                    "provider": "India Meteorological Department (IMD)",
+                    "dataset_version": "IMD Gridded Rainfall (0.25-deg/1.0-deg)",
+                    "ingestion_timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat()
+                }
             }
         }

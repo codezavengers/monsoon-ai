@@ -4,14 +4,67 @@ Computes local feature contributions and meteorological factor attributions.
 Distinguishes statistical model explanations from causal physical conclusions.
 """
 
-from typing import Dict, List, Any
+from typing import Dict, List, Any, Optional
 import numpy as np
+
+def compute_model_feature_importances(
+    trained_model: Any,
+    feature_names: List[str]
+) -> List[Dict[str, Any]]:
+    """
+    Extracts statistical feature importances from a trained tree-based model.
+    Clearly distinguishes statistical importance from physical causality.
+    """
+    importances = []
+    if hasattr(trained_model, "feature_importances_"):
+        raw_imp = trained_model.feature_importances_
+        for name, val in zip(feature_names, raw_imp):
+            importances.append({
+                "feature": name,
+                "importance": round(float(val), 4),
+                "type": "statistical_gini_importance"
+            })
+        importances.sort(key=lambda x: x["importance"], reverse=True)
+    return importances
+
+def compute_local_feature_contributions(
+    trained_model: Any,
+    x_sample: np.ndarray,
+    feature_names: List[str],
+    baseline_x: Optional[np.ndarray] = None
+) -> List[Dict[str, Any]]:
+    """
+    Computes local feature contribution approximation for a specific sample
+    relative to training baseline (tree path contribution or linear difference).
+    """
+    contributions = []
+    if hasattr(trained_model, "feature_importances_"):
+        # Normalized weighted departure from mean
+        x_norm = np.asarray(x_sample, dtype=float).flatten()
+        weights = trained_model.feature_importances_
+        if baseline_x is not None:
+            base = np.asarray(baseline_x, dtype=float).flatten()
+            delta_feat = x_norm - base
+        else:
+            delta_feat = x_norm
+
+        for name, d_val, w in zip(feature_names, delta_feat, weights):
+            contrib = float(d_val * w)
+            contributions.append({
+                "feature": name,
+                "contribution": round(contrib, 4),
+                "direction": "positive" if contrib > 0 else "negative",
+                "importance_weight": round(float(w), 4)
+            })
+        contributions.sort(key=lambda x: abs(x["contribution"]), reverse=True)
+    return contributions
 
 def explain_district_correction(
     raw_record: Dict[str, Any],
     corrected_rain: float,
     regime: str,
-    feature_importances: List[Dict[str, Any]] = None
+    feature_importances: List[Dict[str, Any]] = None,
+    trained_model: Any = None
 ) -> Dict[str, Any]:
     """
     Produces a detailed explainability breakdown for a specific district forecast.

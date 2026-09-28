@@ -2,8 +2,22 @@
   "RegimeAwareRainfallAI_v1.0.0_24h": {
     "model_name": "RegimeAwareRainfallAI",
     "version": "1.0.0",
-    "training_timestamp": "2026-09-28T12:27:32.000735",
+    "training_timestamp": "2026-09-28T13:17:31.068509+00:00",
     "mode": "DEMO",
+    "environment": {
+      "python_version": "3.11.2",
+      "sklearn_version": "1.2.1",
+      "feature_schema_version": "2.0.0",
+      "git_commit": "uncommitted_workspace"
+    },
+    "dataset_provenance": {
+      "dataset_version": "1.0.0",
+      "dataset_hash": "synthetic_seed42",
+      "nwp_provider": "GFS 0.25\u00b0 / NCMRWF NCUM compatible",
+      "nwp_cycle": "00Z",
+      "observation_source": "IMD_Gridded_0.25deg",
+      "calibration_dataset": "2023_JJAS_Validation"
+    },
     "splits": {
       "training_period": "2018-2022 (JJAS)",
       "validation_period": "2023 (JJAS)",
@@ -51,13 +65,28 @@
       "method": "sigmoid_platt",
       "brier_score_heavy": 0.0019
     },
-    "random_seed": 42
+    "random_seed": 42,
+    "artifact_hashes": {}
   },
   "TestRegimeModel_v1.0.0-test_24h": {
     "model_name": "TestRegimeModel",
     "version": "1.0.0-test",
-    "training_timestamp": "2026-09-28T12:40:02.465645",
+    "training_timestamp": "2026-09-28T13:20:46.496365+00:00",
     "mode": "DEMO",
+    "environment": {
+      "python_version": "3.11.2",
+      "sklearn_version": "1.2.1",
+      "feature_schema_version": "2.0.0",
+      "git_commit": "uncommitted_workspace"
+    },
+    "dataset_provenance": {
+      "dataset_version": "1.0.0",
+      "dataset_hash": "synthetic_seed42",
+      "nwp_provider": "GFS_0.25deg",
+      "nwp_cycle": "00Z",
+      "observation_source": "IMD_Gridded_0.25deg",
+      "calibration_dataset": "2023_JJAS_Validation"
+    },
     "splits": {
       "training_period": "2018-2022",
       "validation_period": "2023",
@@ -81,6 +110,7 @@
     "calibration": {
       "method": "platt"
     },
-    "random_seed": 42
+    "random_seed": 42,
+    "artifact_hashes": {}
   }
 }

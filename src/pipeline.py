@@ -15,7 +15,7 @@ import numpy as np
 from src.utils.config import load_config
 from src.utils.logging import setup_logger
 from src.utils.reproducibility import set_seed
-from src.data.loaders import generate_synthetic_monsoon_dataset, split_chronological, save_records_to_csv
+from src.data.loaders import generate_synthetic_monsoon_dataset, split_chronological, save_records_to_csv, build_real_monsoon_dataset
 from src.data.validation import clean_and_validate_dataset
 from src.data.feature_engineering import engineer_features_dataset, FEATURE_NAMES
 from src.regimes.rules import batch_classify_rules, classify_regime_rule, REGIME_NAMES
@@ -62,13 +62,16 @@ class RainfallPostProcessingPipeline:
         """Runs the entire pipeline from data ingestion to spatial evaluation and artifact export."""
         logger.info(f"Step 1: Ingesting dataset [Mode: {self.mode}]...")
         
-        # Check for real data in data/raw
-        real_nwp_dir = "data/raw/nwp"
-        has_real_data = os.path.exists(real_nwp_dir) and len(os.listdir(real_nwp_dir)) > 0
-        
-        if self.mode == "REAL" and has_real_data:
-            logger.info("Operating in REAL mode with external NWP and observation datasets.")
-            raw_dataset = generate_synthetic_monsoon_dataset(start_year=2018, end_year=2024, random_seed=self.seed)
+        if self.mode == "REAL":
+            logger.info("Operating in strict REAL mode with real external NWP and independent observation datasets.")
+            real_nwp_dir = self.config.get("data", {}).get("real_nwp_dir", "data/raw/nwp")
+            real_obs_dir = self.config.get("data", {}).get("real_obs_dir", "data/raw/observations")
+            raw_dataset, manifest = build_real_monsoon_dataset(
+                nwp_dir=real_nwp_dir,
+                obs_dir=real_obs_dir,
+                provider=self.config.get("nwp", {}).get("provider", "GFS")
+            )
+            self.artifacts["real_data_manifest"] = manifest
         else:
             logger.info("Operating in DEMO benchmark mode (Multi-year Indian Monsoon simulation 2018-2024).")
             raw_dataset = generate_synthetic_monsoon_dataset(start_year=2018, end_year=2024, random_seed=self.seed)

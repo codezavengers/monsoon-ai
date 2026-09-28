@@ -156,22 +156,80 @@ class ProbabilisticRainfallPredictor:
         """
         n_samples = len(X)
         q_models = getattr(self, "quantile_models", {})
+        fallback_used = False
+
         if "p10" in q_models and "p90" in q_models:
             p10 = q_models["p10"].predict(X)
             p90 = q_models["p90"].predict(X)
-            # Physical bounds: P10 >= 0, P90 >= point_prediction >= P10
+            # Physical bounds: 0 <= P10 <= point_prediction (P50) <= P90
             p10 = np.clip(p10, 0.0, point_prediction)
-            p90 = np.maximum(p90, point_prediction * 1.15)
+            p90 = np.maximum(p90, point_prediction)
         else:
+            fallback_used = True
             # Empirical regime-scaled uncertainty bounds
             p10 = np.maximum(0.0, point_prediction * 0.70)
             p90 = point_prediction * 1.35 + 5.0
 
+        p50 = point_prediction
+
         return {
             "p10": np.round(p10, 1),
-            "p50": np.round(point_prediction, 1),
+            "p50": np.round(p50, 1),
             "p90": np.round(p90, 1),
-            "uncertainty_spread": np.round(p90 - p10, 1)
+            "uncertainty_spread": np.round(p90 - p10, 1),
+            "fallback_used": fallback_used
+        }
+
+    def evaluate_quantiles(
+        self,
+        X_test: np.ndarray,
+        y_test: np.ndarray,
+        point_predictions: np.ndarray
+    ) -> Dict[str, Any]:
+        """
+        Evaluates quantile uncertainty intervals against true test observations:
+        - Pinball / check loss for tau=0.10, 0.50, 0.90
+        - Empirical coverage: fraction of test observations below P10, P50, P90
+        - Mean interval width (P90 - P10)
+        - Winkler interval score for 80% central prediction interval (P10 to P90)
+        """
+        q = self.predict_quantiles(X_test, point_predictions)
+        p10 = q["p10"]
+        p50 = q["p50"]
+        p90 = q["p90"]
+        y = np.asarray(y_test, dtype=float)
+
+        def pinball(y_true, y_pred, alpha):
+            diff = y_true - y_pred
+            return float(np.mean(np.maximum(alpha * diff, (alpha - 1.0) * diff)))
+
+        loss_p10 = pinball(y, p10, 0.10)
+        loss_p50 = pinball(y, p50, 0.50)
+        loss_p90 = pinball(y, p90, 0.90)
+
+        # Empirical coverage
+        cov_10 = float(np.mean(y <= p10))
+        cov_50 = float(np.mean(y <= p50))
+        cov_90 = float(np.mean(y <= p90))
+
+        # Winkler interval score for alpha=0.20 (80% coverage interval [p10, p90])
+        alpha = 0.20
+        width = p90 - p10
+        penalty_low = (2.0 / alpha) * (p10 - y) * (y < p10)
+        penalty_high = (2.0 / alpha) * (y - p90) * (y > p90)
+        interval_scores = width + penalty_low + penalty_high
+        mean_interval_score = float(np.mean(interval_scores))
+
+        return {
+            "pinball_loss_p10": round(loss_p10, 3),
+            "pinball_loss_p50": round(loss_p50, 3),
+            "pinball_loss_p90": round(loss_p90, 3),
+            "empirical_coverage_p10": round(cov_10, 3),
+            "empirical_coverage_p50": round(cov_50, 3),
+            "empirical_coverage_p90": round(cov_90, 3),
+            "mean_interval_width": round(float(np.mean(width)), 2),
+            "mean_interval_score": round(mean_interval_score, 2),
+            "sample_count": len(y)
         }
 
     def evaluate_probabilistic(

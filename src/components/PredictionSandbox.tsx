@@ -269,8 +269,18 @@ export const PredictionSandbox: React.FC = () => {
         <div className="bg-slate-950/70 border border-slate-800 rounded-xl p-5 flex flex-col justify-between">
           {result ? (
             <div className="space-y-4">
-              <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-                <span className="text-xs font-semibold text-slate-400">Classified Regime</span>
+              <div className="flex flex-wrap items-center justify-between border-b border-slate-800 pb-3 gap-2">
+                <div>
+                  <span className="text-xs font-semibold text-slate-400 block">Classified Regime</span>
+                  <div className="flex items-center gap-2 mt-1">
+                    <span className="text-[10px] px-2 py-0.5 rounded font-mono bg-sky-950 text-sky-400 border border-sky-800">
+                      {result.mode || 'DEMO'} MODE
+                    </span>
+                    <span className="text-[10px] text-slate-400 font-mono">
+                      +{result.lead_time || 24}h ({result.provider || 'GFS'})
+                    </span>
+                  </div>
+                </div>
                 <div
                   className="px-2.5 py-1 rounded text-xs font-bold"
                   style={{

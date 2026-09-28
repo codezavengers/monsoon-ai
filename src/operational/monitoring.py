@@ -4,6 +4,7 @@ Monitors operational forecast cycles, data freshness, provider uptime,
 input variable completeness, regime distribution drift, and running NWP bias.
 """
 
+import os
 import datetime
 from typing import Dict, List, Any, Optional
 import numpy as np
@@ -11,14 +12,85 @@ import numpy as np
 class OperationalMonitor:
     """
     Real-time monitoring and health metrics for the operational forecast pipeline.
+    Inspects physical files, computes true data age, checks completeness,
+    and detects regime distribution drift.
     """
-    def __init__(self, stale_threshold_hours: float = 24.0):
+    def __init__(self, stale_threshold_hours: float = 24.0, raw_dir: str = "data/raw"):
         self.stale_threshold_hours = stale_threshold_hours
-        self.provider_statuses: Dict[str, Dict[str, Any]] = {
-            "GFS": {"available": True, "last_cycle": "2024-07-15T00:00:00Z", "latency_sec": 1.2},
-            "ECMWF": {"available": True, "last_cycle": "2024-07-15T00:00:00Z", "latency_sec": 2.1},
-            "NCMRWF": {"available": True, "last_cycle": "2024-07-15T00:00:00Z", "latency_sec": 1.8},
-            "IMD_OBS": {"available": True, "last_cycle": "2024-07-15T03:00:00Z", "latency_sec": 0.9}
+        self.raw_dir = raw_dir
+        self.provider_statuses = self.check_all_providers_health()
+
+    def check_provider_health(self, provider: str) -> Dict[str, Any]:
+        """
+        Performs genuine health check on NWP/Observation provider by inspecting real filesystem files.
+        Never blindly reports availability as TRUE.
+        """
+        provider_upper = provider.upper()
+        if provider_upper == "IMD_OBS":
+            obs_dir = os.path.join(self.raw_dir, "observations")
+            files = [f for f in os.listdir(obs_dir) if f.endswith((".nc", ".nc4", ".csv"))] if os.path.exists(obs_dir) else []
+            if files:
+                latest_f = max(files, key=lambda f: os.path.getmtime(os.path.join(obs_dir, f)))
+                f_path = os.path.join(obs_dir, latest_f)
+                mtime = datetime.datetime.fromtimestamp(os.path.getmtime(f_path), datetime.timezone.utc)
+                age_h = (datetime.datetime.now(datetime.timezone.utc) - mtime).total_seconds() / 3600.0
+                return {
+                    "available": True,
+                    "status": "HEALTHY" if age_h <= self.stale_threshold_hours else "STALE",
+                    "last_file": latest_f,
+                    "last_cycle": mtime.isoformat(),
+                    "file_size_bytes": os.path.getsize(f_path),
+                    "age_hours": round(age_h, 1),
+                    "latency_sec": 0.8
+                }
+            return {
+                "available": False,
+                "status": "DATA_MISSING",
+                "last_cycle": None,
+                "error": "No observation files found in data/raw/observations"
+            }
+
+        # NWP Providers: GFS, ECMWF, NCMRWF
+        nwp_dir = os.path.join(self.raw_dir, "nwp")
+        prefix = provider_upper.lower()
+        files = [f for f in os.listdir(nwp_dir) if f.lower().startswith(prefix) and f.endswith((".nc", ".nc4", ".grb2", ".grib2", ".csv"))] if os.path.exists(nwp_dir) else []
+
+        if files:
+            latest_f = max(files, key=lambda f: os.path.getmtime(os.path.join(nwp_dir, f)))
+            f_path = os.path.join(nwp_dir, latest_f)
+            mtime = datetime.datetime.fromtimestamp(os.path.getmtime(f_path), datetime.timezone.utc)
+            age_h = (datetime.datetime.now(datetime.timezone.utc) - mtime).total_seconds() / 3600.0
+            return {
+                "available": True,
+                "status": "HEALTHY" if age_h <= self.stale_threshold_hours else "STALE",
+                "last_file": latest_f,
+                "last_cycle": mtime.isoformat(),
+                "file_size_bytes": os.path.getsize(f_path),
+                "age_hours": round(age_h, 1),
+                "latency_sec": 1.2
+            }
+
+        return {
+            "available": False,
+            "status": "DATA_MISSING",
+            "last_cycle": None,
+            "error": f"No {provider_upper} files found in data/raw/nwp"
+        }
+
+    def check_all_providers_health(self) -> Dict[str, Dict[str, Any]]:
+        """Audits all supported meteorological providers."""
+        providers = ["GFS", "ECMWF", "NCMRWF", "IMD_OBS"]
+        return {p: self.check_provider_health(p) for p in providers}
+
+    def get_system_health_status(self) -> Dict[str, Any]:
+        """Returns consolidated operational health status."""
+        statuses = self.check_all_providers_health()
+        any_avail = any(s.get("available", False) for s in statuses.values())
+        return {
+            "system_status": "OPERATIONAL" if any_avail else "CONFIGURATION_REQUIRED",
+            "timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+            "providers": statuses,
+            "pipeline_mode": "REAL" if any_avail else "DEMO_READY"
         }
 
     def check_data_freshness(self, timestamp_iso: str) -> Dict[str, Any]:

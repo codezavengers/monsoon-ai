@@ -105,3 +105,110 @@ def aggregate_grid_to_districts(
         })
         
     return district_results
+
+def point_in_polygon(x: float, y: float, poly: List[Tuple[float, float]]) -> bool:
+    """Ray casting algorithm for point-in-polygon check."""
+    num = len(poly)
+    j = num - 1
+    c = False
+    for i in range(num):
+        if ((poly[i][1] > y) != (poly[j][1] > y)) and \
+                (x < (poly[j][0] - poly[i][0]) * (y - poly[i][1]) / (poly[j][1] - poly[i][1] + 1e-12) + poly[i][0]):
+            c = not c
+        j = i
+    return c
+
+def aggregate_to_states(district_forecasts: List[Dict[str, Any]]) -> Dict[str, Dict[str, Any]]:
+    """
+    Aggregates district-level forecasts to state level.
+    Computes state-level mean, max, and high-impact district counts.
+    """
+    state_groups: Dict[str, List[Dict[str, Any]]] = {}
+    for d in district_forecasts:
+        st = d.get("state", "Other")
+        state_groups.setdefault(st, []).append(d)
+
+    state_results = {}
+    for st, dists in state_groups.items():
+        raw_means = [d.get("raw_nwp_mean", 0.0) for d in dists]
+        corr_means = [d.get("corrected_mean", 0.0) for d in dists]
+        corr_maxs = [d.get("corrected_max", 0.0) for d in dists]
+        heavy_count = sum(1 for d in dists if d.get("corrected_max", 0.0) >= 64.5)
+        very_heavy_count = sum(1 for d in dists if d.get("corrected_max", 0.0) >= 115.6)
+
+        state_results[st] = {
+            "state": st,
+            "district_count": len(dists),
+            "raw_nwp_mean": round(float(np.mean(raw_means)), 1),
+            "corrected_mean": round(float(np.mean(corr_means)), 1),
+            "max_rainfall": round(float(np.max(corr_maxs)), 1),
+            "heavy_rain_districts": heavy_count,
+            "very_heavy_districts": very_heavy_count
+        }
+    return state_results
+
+def aggregate_to_meteorological_regions(district_forecasts: List[Dict[str, Any]]) -> Dict[str, Dict[str, Any]]:
+    """
+    Aggregates forecasts to IMD 4 broad meteorological regions:
+    - Northwest India
+    - Central India
+    - East & Northeast India
+    - South Peninsular India
+    """
+    region_mapping = {
+        "Western Ghats": "South Peninsular India",
+        "South Interior Karnataka": "South Peninsular India",
+        "Tamil Nadu Coast": "South Peninsular India",
+        "Tamil Nadu Interior": "South Peninsular India",
+        "Telangana Plateau": "South Peninsular India",
+        "Coastal Andhra": "South Peninsular India",
+        "Kerala Coast": "South Peninsular India",
+        "Central India Core": "Central India",
+        "Vidarbha": "Central India",
+        "Marathwada": "Central India",
+        "North Konkan": "Central India",
+        "South Konkan": "Central India",
+        "Gujarat Plains": "Central India",
+        "Saurashtra Coast": "Central India",
+        "East Madhya Pradesh": "Central India",
+        "West Madhya Pradesh": "Central India",
+        "East Rajasthan": "Northwest India",
+        "West Rajasthan": "Northwest India",
+        "Haryana Plains": "Northwest India",
+        "Punjab": "Northwest India",
+        "Himachal Hills": "Northwest India",
+        "Kashmir Valley": "Northwest India",
+        "Uttarakhand Foothills": "Northwest India",
+        "West UP Plains": "Northwest India",
+        "East UP Plains": "Central India",
+        "North Bihar": "East & Northeast India",
+        "South Bihar": "East & Northeast India",
+        "Gangetic West Bengal": "East & Northeast India",
+        "Sub-Himalayan Bengal": "East & Northeast India",
+        "Brahmaputra Valley": "East & Northeast India",
+        "Barak Valley": "East & Northeast India",
+        "Meghalaya Plateau": "East & Northeast India",
+        "Odisha Coast": "East & Northeast India",
+        "Interior Odisha": "East & Northeast India"
+    }
+
+    region_groups: Dict[str, List[Dict[str, Any]]] = {}
+    for d in district_forecasts:
+        zone = d.get("zone", "")
+        region = region_mapping.get(zone, "Central India")
+        region_groups.setdefault(region, []).append(d)
+
+    results = {}
+    for reg_name, dists in region_groups.items():
+        raw_m = [d.get("raw_nwp_mean", 0.0) for d in dists]
+        corr_m = [d.get("corrected_mean", 0.0) for d in dists]
+        corr_max = [d.get("corrected_max", 0.0) for d in dists]
+        results[reg_name] = {
+            "region": reg_name,
+            "district_count": len(dists),
+            "raw_nwp_mean": round(float(np.mean(raw_m)), 1),
+            "corrected_mean": round(float(np.mean(corr_m)), 1),
+            "regional_max": round(float(np.max(corr_max)), 1),
+            "delta_correction": round(float(np.mean(corr_m) - np.mean(raw_m)), 1)
+        }
+    return results

@@ -66,35 +66,74 @@ class ECMWFAdapter(BaseNWPAdapter):
         sub_lons = lons[lon_mask]
         self.validate_spatial_domain(sub_lats, sub_lons)
 
+        # Step / lead time selection
+        lead_coord = next((c for c in ["step", "lead_time", "forecast_period", "time"] if c in ds.coords), None)
+        step_idx = 0
+        actual_lead_h = lead_time_hours
+
+        if lead_coord and ds[lead_coord].size > 1:
+            coord_vals = ds[lead_coord].values
+            hours_list = []
+            for val in coord_vals:
+                if isinstance(val, np.timedelta64):
+                    hours_list.append(float(val / np.timedelta64(1, "h")))
+                elif hasattr(val, "total_seconds"):
+                    hours_list.append(val.total_seconds() / 3600.0)
+                else:
+                    try:
+                        hours_list.append(float(val))
+                    except (ValueError, TypeError):
+                        hours_list.append(0.0)
+            hours_arr = np.array(hours_list)
+            diffs = np.abs(hours_arr - lead_time_hours)
+            step_idx = int(np.argmin(diffs))
+            actual_lead_h = int(hours_arr[step_idx])
+
         var_mapping = {
             "rainfall_nwp": ["tp", "total_precipitation", "cp"],
-            "temperature": ["2t", "t2m"],
-            "humidity": ["r", "rh"],
-            "pressure": ["msl", "sp"],
+            "temperature": ["2t", "t2m", "temperature"],
+            "humidity": ["r", "rh", "humidity"],
+            "pressure": ["msl", "sp", "mslp"],
             "cape": ["cape"],
-            "vertical_velocity": ["w", "omega"]
+            "vertical_velocity": ["w", "omega", "vvel500"],
+            "geopotential_height": ["z", "gh", "z500"],
+            "wind_u": ["10u", "u10"],
+            "wind_v": ["10v", "v10"],
+            "u_wind_850": ["u850", "u_850"],
+            "v_wind_850": ["v850", "v_850"]
         }
 
         canonical_vars = {}
+        var_attrs = {}
+
         for canonical, candidates in var_mapping.items():
             for cand in candidates:
                 if cand in ds.variables:
-                    data = ds[cand].values
+                    da = ds[cand]
+                    var_attrs[canonical] = dict(da.attrs)
+                    data = da.values
                     if data.ndim == 3:
-                        data = data[-1]
+                        idx = min(step_idx, data.shape[0] - 1)
+                        data = data[idx]
+                    elif data.ndim == 4:
+                        idx = min(step_idx, data.shape[0] - 1)
+                        data = data[idx, 0]
                     canonical_vars[canonical] = data[np.ix_(lat_mask, lon_mask)]
                     break
 
-        # ECMWF 'tp' is in meters! Convert to millimeters: 1 m = 1000 mm
-        if "rainfall_nwp" in canonical_vars:
-            raw_tp = canonical_vars["rainfall_nwp"]
-            if np.nanmax(raw_tp) < 2.0: # If in meters (e.g. 0.050 m)
-                canonical_vars["rainfall_nwp"] = raw_tp * 1000.0
+        if "wind_u" in canonical_vars and "wind_v" in canonical_vars:
+            u = canonical_vars["wind_u"]
+            v = canonical_vars["wind_v"]
+            canonical_vars["wind_speed"] = np.sqrt(u**2 + v**2)
+            canonical_vars["wind_direction"] = (np.degrees(np.arctan2(-u, -v)) + 360.0) % 360.0
 
-        warnings = self.validate_variables(canonical_vars)
+        if "u_wind_850" in canonical_vars and "v_wind_850" in canonical_vars:
+            canonical_vars["wind_speed_850"] = np.sqrt(canonical_vars["u_wind_850"]**2 + canonical_vars["v_wind_850"]**2)
 
-        now = init_time or datetime.datetime.utcnow()
-        valid = now + datetime.timedelta(hours=lead_time_hours)
+        warnings = self.validate_variables(canonical_vars, var_attrs)
+
+        now = init_time or datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None)
+        valid = now + datetime.timedelta(hours=actual_lead_h)
 
         return {
             "provider": self.provider_name,
@@ -105,9 +144,12 @@ class ECMWFAdapter(BaseNWPAdapter):
                 "source_file": os.path.basename(filepath),
                 "init_time": now.isoformat(),
                 "valid_time": valid.isoformat(),
-                "lead_time_hours": lead_time_hours,
+                "lead_time_hours": actual_lead_h,
+                "requested_lead_time_hours": lead_time_hours,
+                "step_index": step_idx,
                 "warnings": warnings,
-                "spatial_resolution": f"{self.resolution_deg}° x {self.resolution_deg}°"
+                "spatial_resolution": f"{self.resolution_deg}° x {self.resolution_deg}°",
+                "variable_attributes": {k: v for k, v in var_attrs.items() if v}
             }
         }
 
