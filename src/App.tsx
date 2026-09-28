@@ -7,6 +7,10 @@ import { RegimeAnalysis } from './components/RegimeAnalysis';
 import { DistrictTable } from './components/DistrictTable';
 import { PredictionSandbox } from './components/PredictionSandbox';
 import { MethodologyPanel } from './components/MethodologyPanel';
+import { ModelMonitoring } from './components/ModelMonitoring';
+import { ModelStatusIndicator } from './components/ModelStatusIndicator';
+import { DataFreshnessIndicator } from './components/DataFreshnessIndicator';
+import { DownloadReportButton } from './components/DownloadReportButton';
 import {
   CloudRain,
   MapPin,
@@ -21,17 +25,20 @@ import {
   CheckCircle2,
   Calendar,
   Clock,
-  Sparkles
+  Sparkles,
+  ShieldAlert
 } from 'lucide-react';
 
 export default function App() {
   const [metrics, setMetrics] = useState<SummaryMetrics | null>(null);
   const [selectedDistrict, setSelectedDistrict] = useState<DistrictForecast | null>(null);
-  const [activeTab, setActiveTab] = useState<'map' | 'table' | 'verification' | 'regimes' | 'sandbox' | 'methodology'>('map');
+  const [activeTab, setActiveTab] = useState<'map' | 'table' | 'verification' | 'regimes' | 'monitoring' | 'sandbox' | 'methodology'>('map');
   const [activeLayer, setActiveLayer] = useState<'nwp' | 'corrected' | 'delta' | 'prob_heavy' | 'regime' | 'observed'>('corrected');
   const [loading, setLoading] = useState(true);
   const [runningPipeline, setRunningPipeline] = useState(false);
   const [forecastDate, setForecastDate] = useState('2024-07-15');
+  const [leadTime, setLeadTime] = useState('24');
+  const [nwpProvider, setNwpProvider] = useState('GFS');
 
   // Load metrics from server
   const fetchMetrics = async () => {
@@ -42,7 +49,6 @@ export default function App() {
       if (json.success && json.data) {
         setMetrics(json.data);
         if (json.data.district_forecasts && json.data.district_forecasts.length > 0) {
-          // Default select first high-impact district (e.g. Pune or Mumbai)
           const highImpact = json.data.district_forecasts.find((d: DistrictForecast) => d.corrected_max >= 64.5) || json.data.district_forecasts[0];
           setSelectedDistrict(highImpact);
         }
@@ -51,6 +57,26 @@ export default function App() {
       console.error('Failed to load metrics:', e);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Fetch district forecasts dynamically when date or lead time changes
+  const handleDateOrLeadChange = async (newDate: string, newLead: string) => {
+    try {
+      const res = await fetch(`/api/districts?date=${newDate}&lead_time=${newLead}`);
+      const json = await res.json();
+      if (json.success && json.districts && metrics) {
+        setMetrics({
+          ...metrics,
+          district_forecasts: json.districts
+        });
+        if (selectedDistrict) {
+          const updated = json.districts.find((d: DistrictForecast) => d.district === selectedDistrict.district) || json.districts[0];
+          setSelectedDistrict(updated);
+        }
+      }
+    } catch (e) {
+      console.error('Failed to fetch forecasts for selection:', e);
     }
   };
 
@@ -82,6 +108,7 @@ export default function App() {
   const rawModel = metrics?.model_comparison?.comparison_table?.find((m) => m.model === 'Raw NWP');
   const regimeModel = metrics?.model_comparison?.comparison_table?.find((m) => m.model.includes('Regime-Aware'));
   const rmseImprovement = rawModel && regimeModel ? ((rawModel.rmse - regimeModel.rmse) / rawModel.rmse * 100).toFixed(0) : '93';
+  const isRealMode = (metrics as any)?.mode === 'REAL';
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-sky-500 selection:text-white">
@@ -101,6 +128,13 @@ export default function App() {
                   <span className="text-[10px] font-semibold text-slate-400 bg-slate-800 px-2 py-0.5 rounded border border-slate-700">
                     ID: 26080
                   </span>
+                  <span className={`text-[10px] font-semibold px-2 py-0.5 rounded border ${
+                    isRealMode 
+                      ? 'bg-emerald-950 text-emerald-300 border-emerald-800' 
+                      : 'bg-amber-950/80 text-amber-300 border-amber-800/80'
+                  }`}>
+                    {isRealMode ? 'MODE: REAL (NWP + Observations)' : 'MODE: DEMO BENCHMARK'}
+                  </span>
                 </div>
                 <p className="text-xs text-slate-400">
                   AI-driven correction of NWP rainfall forecasts using weather-regime classification
@@ -109,14 +143,39 @@ export default function App() {
             </div>
           </div>
 
-          {/* Controls: Date, Lead Time, Re-run Pipeline */}
-          <div className="flex flex-wrap items-center gap-3 text-xs">
-            <div className="flex items-center gap-1.5 bg-slate-950 px-3 py-1.5 rounded-lg border border-slate-800">
+          {/* Controls: Model Status, Data Freshness, Date, Lead Time, Model Source, Re-run Pipeline */}
+          <div className="flex flex-wrap items-center gap-2.5 text-xs">
+            {/* Live Model Status, Train/Val/Test Splits & Serialization Timestamp */}
+            <ModelStatusIndicator 
+              onRefreshPipeline={fetchMetrics}
+              isRefreshing={runningPipeline}
+            />
+
+            {/* Live NWP Data Freshness Indicator (turns red if >24h old) */}
+            <DataFreshnessIndicator nwpProvider={nwpProvider} />
+
+            <div className="flex items-center gap-1.5 bg-slate-950 px-2.5 py-1.5 rounded-lg border border-slate-800">
+              <span className="text-slate-400">NWP:</span>
+              <select
+                value={nwpProvider}
+                onChange={(e) => setNwpProvider(e.target.value)}
+                className="bg-transparent text-white font-medium focus:outline-none cursor-pointer"
+              >
+                <option value="GFS" className="bg-slate-900">GFS 0.25° (NOAA)</option>
+                <option value="ECMWF" className="bg-slate-900">ECMWF HRES</option>
+                <option value="NCMRWF" className="bg-slate-900">NCMRWF NCUM</option>
+              </select>
+            </div>
+
+            <div className="flex items-center gap-1.5 bg-slate-950 px-2.5 py-1.5 rounded-lg border border-slate-800">
               <Calendar className="w-3.5 h-3.5 text-slate-400" />
               <span className="text-slate-400">Date:</span>
               <select
                 value={forecastDate}
-                onChange={(e) => setForecastDate(e.target.value)}
+                onChange={(e) => {
+                  setForecastDate(e.target.value);
+                  handleDateOrLeadChange(e.target.value, leadTime);
+                }}
                 className="bg-transparent text-white font-medium focus:outline-none cursor-pointer"
               >
                 <option value="2024-07-15" className="bg-slate-900">15 July 2024 (Active Spell)</option>
@@ -125,19 +184,39 @@ export default function App() {
               </select>
             </div>
 
-            <div className="flex items-center gap-1.5 bg-slate-950 px-3 py-1.5 rounded-lg border border-slate-800">
+            <div className="flex items-center gap-1.5 bg-slate-950 px-2.5 py-1.5 rounded-lg border border-slate-800">
               <Clock className="w-3.5 h-3.5 text-slate-400" />
-              <span className="text-slate-400">Lead Time:</span>
-              <span className="text-white font-semibold">+24 Hours</span>
+              <span className="text-slate-400">Lead:</span>
+              <select
+                value={leadTime}
+                onChange={(e) => {
+                  setLeadTime(e.target.value);
+                  handleDateOrLeadChange(forecastDate, e.target.value);
+                }}
+                className="bg-transparent text-white font-medium focus:outline-none cursor-pointer"
+              >
+                <option value="24" className="bg-slate-900">+24 Hours</option>
+                <option value="48" className="bg-slate-900">+48 Hours</option>
+                <option value="72" className="bg-slate-900">+72 Hours</option>
+              </select>
             </div>
+
+            {/* Download Report Button with structured CSV/JSON formats */}
+            <DownloadReportButton 
+              forecastDate={forecastDate}
+              leadTime={leadTime}
+              nwpProvider={nwpProvider}
+              metrics={metrics}
+              districts={districts}
+            />
 
             <button
               onClick={handleRunPipeline}
               disabled={runningPipeline}
-              className="flex items-center gap-1.5 px-3.5 py-1.5 bg-sky-600 hover:bg-sky-500 text-white font-semibold rounded-lg shadow-md transition disabled:opacity-50"
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-sky-600 hover:bg-sky-500 text-white font-semibold rounded-lg shadow-md transition disabled:opacity-50"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${runningPipeline ? 'animate-spin' : ''}`} />
-              {runningPipeline ? 'Re-running Pipeline...' : 'Run Pipeline'}
+              {runningPipeline ? 'Running...' : 'Run Pipeline'}
             </button>
           </div>
         </div>
@@ -228,6 +307,16 @@ export default function App() {
           >
             <Activity className="w-3.5 h-3.5" />
             Weather Regimes & Classifier
+          </button>
+
+          <button
+            onClick={() => setActiveTab('monitoring')}
+            className={`flex items-center gap-2 px-3.5 py-2 text-xs font-semibold rounded-lg transition-all ${
+              activeTab === 'monitoring' ? 'bg-sky-600 text-white shadow-md' : 'text-slate-400 hover:text-white hover:bg-slate-900'
+            }`}
+          >
+            <ShieldAlert className="w-3.5 h-3.5" />
+            Model Monitoring & Drift
           </button>
 
           <button

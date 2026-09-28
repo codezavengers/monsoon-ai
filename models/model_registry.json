@@ -1,0 +1,86 @@
+{
+  "RegimeAwareRainfallAI_v1.0.0_24h": {
+    "model_name": "RegimeAwareRainfallAI",
+    "version": "1.0.0",
+    "training_timestamp": "2026-09-28T12:27:32.000735",
+    "mode": "DEMO",
+    "splits": {
+      "training_period": "2018-2022 (JJAS)",
+      "validation_period": "2023 (JJAS)",
+      "test_period": "2024 (JJAS)"
+    },
+    "meteorological_spec": {
+      "nwp_source": "GFS 0.25\u00b0 / NCMRWF NCUM compatible",
+      "spatial_resolution": "0.25\u00b0 x 0.25\u00b0 (~25 km)",
+      "lead_time_hours": 24,
+      "features": [
+        "rainfall_nwp",
+        "log_rainfall_nwp",
+        "temperature",
+        "humidity",
+        "pressure",
+        "wind_speed",
+        "wind_u",
+        "wind_v",
+        "moisture_flux",
+        "cape",
+        "vertical_velocity",
+        "dewpoint_approx",
+        "lat",
+        "lon",
+        "elevation",
+        "coast_dist_km",
+        "orographic_enhancement_index",
+        "month",
+        "day_of_year",
+        "is_monsoon_core",
+        "lead_time_hours",
+        "nwp_bias_prior"
+      ]
+    },
+    "hyperparameters": {
+      "n_estimators": 100,
+      "max_depth": 10,
+      "routing": "soft_mixture"
+    },
+    "metrics": {
+      "test_accuracy": 0.993,
+      "fss_5x5": 0.964
+    },
+    "calibration": {
+      "method": "sigmoid_platt",
+      "brier_score_heavy": 0.0019
+    },
+    "random_seed": 42
+  },
+  "TestRegimeModel_v1.0.0-test_24h": {
+    "model_name": "TestRegimeModel",
+    "version": "1.0.0-test",
+    "training_timestamp": "2026-09-28T12:40:02.465645",
+    "mode": "DEMO",
+    "splits": {
+      "training_period": "2018-2022",
+      "validation_period": "2023",
+      "test_period": "2024"
+    },
+    "meteorological_spec": {
+      "nwp_source": "GFS_0.25deg",
+      "spatial_resolution": "0.25deg",
+      "lead_time_hours": 24,
+      "features": [
+        "rainfall_nwp",
+        "pressure"
+      ]
+    },
+    "hyperparameters": {
+      "max_depth": 8
+    },
+    "metrics": {
+      "accuracy": 0.95
+    },
+    "calibration": {
+      "method": "platt"
+    },
+    "random_seed": 42
+  }
+}
