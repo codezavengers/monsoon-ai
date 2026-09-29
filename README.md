@@ -1,7 +1,7 @@
-# MEGHDRISTI (मेघदृष्टि)
+# MEGHDRISHTI (मेघदृष्टि)
 ## Regime-Aware AI Post-Processing of Monsoon Rainfall Forecasts
 
-**System Name:** MEGHDRISTI (मेघदृष्टि · Cloud Vision AI)  
+**System Name:** MEGHDRISHTI (मेघदृष्टि · Cloud Vision AI)  
 **Problem Statement ID:** 26080  
 **Title:** Regime-Aware AI Post-Processing of Monsoon Rainfall Forecasts  
 **Domain:** Artificial Intelligence / Machine Learning, Synoptic & Mesoscale Meteorology, Numerical Weather Prediction (NWP), Geospatial Modeling
@@ -19,7 +19,7 @@ During the Indian Summer Monsoon (June–September / JJAS), raw Numerical Weathe
 
 Standard global bias-correction methods (e.g., uniform linear scaling or monolithic ML post-processors) treat all forecast errors uniformly, leading to overcorrection in dry spells and undercorrection in extreme rain events. 
 
-**MEGHDRISTI** implements an end-to-end, scientifically credible **Regime-Aware AI Post-Processing Architecture** that:
+**MEGHDRISHTI** implements an end-to-end, scientifically credible **Regime-Aware AI Post-Processing Architecture** that:
 1. Classifies the prevailing synoptic/mesoscale weather regime using both rule-based physical reference baselines and supervised machine learning classifiers.
 2. Performs soft continuous mixture-of-experts routing using predicted class probability distributions across regimes.
 3. Produces calibrated exceedance probabilities for IMD operational thresholds (Heavy $\ge 64.5$ mm, Very Heavy $\ge 115.6$ mm, Extreme $\ge 204.5$ mm).
@@ -43,7 +43,7 @@ flowchart TD
         B1 --> B2[Feature Matrix Extraction<br/>Moisture Flux, Orographic Index, CAPE, Omega]
     end
 
-    subgraph Regime_AI [3. MEGHDRISTI Regime-Aware Neural Core]
+    subgraph Regime_AI [3. MEGHDRISHTI Regime-Aware Neural Core]
         B2 --> C1[Weather Regime Identification<br/>Rule Reference vs Supervised Multi-Class ML]
         C1 --> C2[Predicted 8-Class Probability Distribution & Confidence]
         C2 --> D1{Soft Mixture Routing}
@@ -68,7 +68,7 @@ flowchart TD
         E1 & A2 --> V1[True 2-D Fractions Skill Score: 1x1, 3x3, 5x5, 7x7]
         E1 & A2 --> V2[Spatial Centroid Displacement Error km]
         E2 & A2 --> V3[Brier Skill Score & Reliability Diagrams]
-        E4 --> V4[MEGHDRISTI High-Tech Meteorological Intelligence Dashboard]
+        E4 --> V4[MEGHDRISHTI High-Tech Meteorological Intelligence Dashboard]
     end
 ```
 

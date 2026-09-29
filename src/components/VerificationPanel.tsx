@@ -75,7 +75,7 @@ export const VerificationPanel: React.FC<VerificationPanelProps> = ({ metrics })
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = 'meghdristi_model_comparison_verification.csv';
+    link.download = 'meghdrishti_model_comparison_verification.csv';
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);

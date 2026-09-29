@@ -121,7 +121,7 @@ export default function App() {
         regime: 'Monsoon Depression Core',
         badgeColor: 'border-rose-500/40 bg-rose-950/40 text-rose-300',
         confidence: '98.7%',
-        summary: 'Deep Barometric Low over NW Bay of Bengal (MSLP 994 hPa). MEGHDRISTI spatial displacement regressor tracks cyclonic core +0.22°N with high moisture influx.',
+        summary: 'Deep Barometric Low over NW Bay of Bengal (MSLP 994 hPa). MEGHDRISHTI spatial displacement regressor tracks cyclonic core +0.22°N with high moisture influx.',
         action: 'Intense precipitation warning for Odisha, Gangetic West Bengal & Chhattisgarh corridors.'
       };
     }
@@ -164,7 +164,7 @@ export default function App() {
               <div>
                 <div className="flex items-center gap-2">
                   <h1 className="text-lg font-black tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-sky-300 to-indigo-300">
-                    MEGHDRISTI
+                    MEGHDRISHTI
                   </h1>
                   <span className="text-[11px] font-semibold text-cyan-300/90 bg-cyan-950/80 px-2 py-0.5 rounded border border-cyan-800/60 font-mono tracking-tight">
                     मेघदृष्टि AI
@@ -254,7 +254,7 @@ export default function App() {
             <button
               onClick={() => setShowArchModal(true)}
               className="flex items-center gap-1.5 px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-cyan-300 font-medium rounded-lg border border-cyan-800/50 hover:border-cyan-500/60 transition cursor-pointer"
-              title="View MEGHDRISTI Deep Learning Pipeline Architecture"
+              title="View MEGHDRISHTI Deep Learning Pipeline Architecture"
             >
               <BrainCircuit className="w-3.5 h-3.5 text-cyan-400" />
               <span>AI Pipeline</span>
@@ -283,7 +283,7 @@ export default function App() {
 
       {/* Main Container */}
       <main className="max-w-7xl mx-auto w-full px-4 lg:px-8 py-5 flex-1 space-y-5">
-        {/* MEGHDRISTI AI Synoptic Telemetry & Synthesis HUD */}
+        {/* MEGHDRISHTI AI Synoptic Telemetry & Synthesis HUD */}
         <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-slate-900 via-slate-900/90 to-slate-950 border border-cyan-900/30 p-4 shadow-xl shadow-cyan-950/20">
           <div className="absolute top-0 right-0 w-96 h-full bg-gradient-to-l from-cyan-500/5 via-sky-500/5 to-transparent pointer-events-none" />
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 relative z-10">
@@ -291,7 +291,7 @@ export default function App() {
               <div className="flex items-center gap-2">
                 <span className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-mono font-bold uppercase tracking-wider bg-cyan-500/10 text-cyan-300 border border-cyan-500/30">
                   <Sparkles className="w-3 h-3 text-cyan-400" />
-                  MEGHDRISTI Neural Synthesis
+                  MEGHDRISHTI Neural Synthesis
                 </span>
                 <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold border ${aiBrief.badgeColor}`}>
                   {aiBrief.regime}
@@ -361,7 +361,7 @@ export default function App() {
 
           <div className="bg-slate-900/90 border border-emerald-900/40 p-3.5 rounded-xl flex items-center justify-between hover:border-emerald-500/40 transition-colors">
             <div>
-              <span className="text-[11px] text-emerald-400 font-semibold">MEGHDRISTI Skill Gain</span>
+              <span className="text-[11px] text-emerald-400 font-semibold">MEGHDRISHTI Skill Gain</span>
               <div className="text-xl font-bold text-emerald-400 mt-0.5">-{rmseImprovement}% RMSE</div>
               <span className="text-[10px] text-emerald-500 font-mono">CSI: 0.989 · Threat: Top 1%</span>
             </div>
@@ -511,7 +511,7 @@ export default function App() {
                 </div>
                 <div>
                   <h3 className="font-bold text-white text-sm">
-                    MEGHDRISTI Neural Pipeline Architecture
+                    MEGHDRISHTI Neural Pipeline Architecture
                   </h3>
                   <p className="text-[11px] text-slate-400 font-mono">
                     Multi-Expert Regime-Aware Post-Processing Core
@@ -557,7 +557,7 @@ export default function App() {
                 <span className="font-semibold text-cyan-300 block mb-1">
                   Key Scientific Innovation:
                 </span>
-                Standard post-processing applies uniform scaling, which dampens localized extreme monsoon downpours and exaggerates dry breaks. MEGHDRISTI dynamically conditions bias-correction functions on the synoptic atmospheric state, reducing RMSE by 93% and achieving a 0.964 Fractions Skill Score at neighborhood scales.
+                Standard post-processing applies uniform scaling, which dampens localized extreme monsoon downpours and exaggerates dry breaks. MEGHDRISHTI dynamically conditions bias-correction functions on the synoptic atmospheric state, reducing RMSE by 93% and achieving a 0.964 Fractions Skill Score at neighborhood scales.
               </div>
             </div>
 
@@ -577,7 +577,7 @@ export default function App() {
       <footer className="border-t border-slate-900 bg-slate-950 py-4 px-4 lg:px-8 text-center text-xs text-slate-500">
         <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-2">
-            <span className="font-semibold text-cyan-400">MEGHDRISTI</span>
+            <span className="font-semibold text-cyan-400">MEGHDRISHTI</span>
             <span>(मेघदृष्टि · Cloud Vision AI)</span>
             <span className="text-slate-600">·</span>
             <span>Problem Statement ID: 26080</span>

@@ -1,6 +1,6 @@
 {
-  "name": "MEGHDRISTI - AI Monsoon Weather Intelligence",
-  "description": "MEGHDRISTI (मेघदृष्टि): Advanced AI/ML post-processing system for Indian monsoon numerical weather prediction (NWP) forecasts with regime classification, bias correction, heavy rainfall probabilities, and verification metrics.",
+  "name": "MEGHDRISHTI - AI Monsoon Weather Intelligence",
+  "description": "MEGHDRISHTI (मेघदृष्टि): Advanced AI/ML post-processing system for Indian monsoon numerical weather prediction (NWP) forecasts with regime classification, bias correction, heavy rainfall probabilities, and verification metrics.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

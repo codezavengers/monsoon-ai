@@ -222,7 +222,7 @@ app.get(['/api/export/report', '/api/report/export'], (req: Request, res: Respon
 
     if (format === 'json') {
       const reportPayload = {
-        report_title: "MEGHDRISTI - Regime-Aware AI Monsoon Rainfall Forecast Report",
+        report_title: "MEGHDRISHTI - Regime-Aware AI Monsoon Rainfall Forecast Report",
         exported_at: new Date().toISOString(),
         dashboard_state: {
           forecast_date: date,
@@ -236,7 +236,7 @@ app.get(['/api/export/report', '/api/report/export'], (req: Request, res: Respon
           }
         },
         model_provenance: {
-          project_name: data.project_name || "MEGHDRISTI",
+          project_name: data.project_name || "MEGHDRISHTI",
           model_version: data.model_version || "2.4.0-neural",
           mode: data.mode || "DEMO",
           splits: {
@@ -254,13 +254,13 @@ app.get(['/api/export/report', '/api/report/export'], (req: Request, res: Respon
       };
 
       res.setHeader('Content-Type', 'application/json; charset=utf-8');
-      res.setHeader('Content-Disposition', `attachment; filename="meghdristi_monsoon_forecast_report_${date}_${leadClean}h.json"`);
+      res.setHeader('Content-Disposition', `attachment; filename="meghdrishti_monsoon_forecast_report_${date}_${leadClean}h.json"`);
       return res.send(JSON.stringify(reportPayload, null, 2));
     }
 
     // Default CSV multi-section format
     const lines: string[] = [
-      '# MEGHDRISTI - REGIME-AWARE AI MONSOON RAINFALL FORECAST REPORT',
+      '# MEGHDRISHTI - REGIME-AWARE AI MONSOON RAINFALL FORECAST REPORT',
       `# Forecast Date: ${date}`,
       `# Lead Time: +${leadClean} Hours`,
       `# NWP Provider: ${nwp}`,
@@ -312,7 +312,7 @@ app.get(['/api/export/report', '/api/report/export'], (req: Request, res: Respon
 
     const csvContent = '\uFEFF' + lines.join('\n');
     res.setHeader('Content-Type', 'text/csv; charset=utf-8');
-    res.setHeader('Content-Disposition', `attachment; filename="meghdristi_monsoon_forecast_report_${date}_${leadClean}h.csv"`);
+    res.setHeader('Content-Disposition', `attachment; filename="meghdrishti_monsoon_forecast_report_${date}_${leadClean}h.csv"`);
     return res.send(csvContent);
   } catch (err: any) {
     return res.status(500).json({ success: false, error: err.message });
