@@ -141,16 +141,9 @@ def create_sample_fixtures(output_dir: str = "data/fixtures"):
 
     imd_path = os.path.join(output_dir, "observations", "imd_rainfall_2024.nc")
     ds_imd.to_netcdf(imd_path)
-    print(f"Generated IMD Observation NetCDF fixture at: {imd_path}")
-
-    # Copy to data/raw for immediate use in REAL mode
-    raw_nwp = "data/raw/nwp"
-    raw_obs = "data/raw/observations"
-    os.makedirs(raw_nwp, exist_ok=True)
-    os.makedirs(raw_obs, exist_ok=True)
-    ds_gfs.to_netcdf(os.path.join(raw_nwp, "gfs_20240715_00z.nc"))
-    ds_imd.to_netcdf(os.path.join(raw_obs, "imd_rainfall_2024.nc"))
-    print("Copied fixtures to data/raw/nwp and data/raw/observations for REAL mode.")
+    print(f"Generated IMD Observation NetCDF TEST FIXTURE at: {imd_path}")
+    print("Test fixtures preserved under data/fixtures/ for format verification only.")
+    print("REAL operational mode strictly requires authentic external datasets configured via NWP_SOURCE_PATH / IMD_OBS_PATH.")
 
 if __name__ == "__main__":
     create_sample_fixtures()

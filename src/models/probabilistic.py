@@ -248,6 +248,7 @@ class ProbabilisticRainfallPredictor:
             y_true = (y_test >= thresh).astype(int)
             y_prob = probs[name]
             pos_ratio = float(np.mean(y_true))
+            pos_count = int(np.sum(y_true))
 
             if SKLEARN_AVAILABLE and pos_ratio > 0 and pos_ratio < 1.0:
                 bs = float(brier_score_loss(y_true, y_prob))
@@ -264,6 +265,29 @@ class ProbabilisticRainfallPredictor:
                     pr_auc = float(auc(rec_vals, prec_vals))
                 except Exception:
                     pr_auc = pos_ratio
+
+                # Calibration slope & intercept via logistic/linear fit
+                try:
+                    p_clipped = np.clip(y_prob, 1e-4, 1.0 - 1e-4)
+                    logits = np.log(p_clipped / (1.0 - p_clipped)).reshape(-1, 1)
+                    from sklearn.linear_model import LogisticRegression
+                    cal_lr = LogisticRegression(C=1e5)
+                    cal_lr.fit(logits, y_true)
+                    cal_slope = float(cal_lr.coef_[0][0])
+                    cal_intercept = float(cal_lr.intercept_[0])
+                except Exception:
+                    cal_slope = 1.0
+                    cal_intercept = 0.0
+
+                # Bootstrap 95% Confidence Interval for Brier Score
+                n_boot = min(100, len(y_true))
+                rng = np.random.RandomState(self.random_state)
+                boot_bs = []
+                for _ in range(n_boot):
+                    boot_idx = rng.randint(0, len(y_true), size=len(y_true))
+                    boot_bs.append(float(brier_score_loss(y_true[boot_idx], y_prob[boot_idx])))
+                ci_low = float(np.percentile(boot_bs, 2.5))
+                ci_high = float(np.percentile(boot_bs, 97.5))
 
                 # 5-bin Reliability Diagram
                 bins = np.linspace(0.0, 1.0, 6)
@@ -289,15 +313,25 @@ class ProbabilisticRainfallPredictor:
                 bss = 0.0
                 roc = 0.5
                 pr_auc = pos_ratio
+                cal_slope = 1.0
+                cal_intercept = 0.0
+                ci_low = bs
+                ci_high = bs
                 reliability_bins = []
 
             metrics_by_thresh[name] = {
                 "threshold_mm": thresh,
+                "event_count": pos_count,
+                "event_frequency": round(pos_ratio, 4),
+                "climatological_baseline": round(pos_ratio, 4),
                 "brier_score": round(bs, 4),
                 "brier_skill_score": round(bss, 3),
+                "brier_score_95ci": [round(ci_low, 4), round(ci_high, 4)],
+                "calibration_slope": round(cal_slope, 3),
+                "calibration_intercept": round(cal_intercept, 3),
                 "roc_auc": round(roc, 3),
                 "pr_auc": round(pr_auc, 3),
-                "positive_sample_count": int(np.sum(y_true)),
+                "positive_sample_count": pos_count,
                 "total_sample_count": len(y_true),
                 "reliability_diagram": reliability_bins
             }

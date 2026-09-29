@@ -7,7 +7,7 @@ Implements:
 3. Temporal and spatial alignment utilities for forecast vs observation fields.
 """
 
-from typing import Tuple, Optional
+from typing import Tuple, Optional, Any, Dict
 import numpy as np
 
 def bilinear_regrid_2d(
@@ -225,4 +225,80 @@ def align_forecast_and_observation(
             target_lons=obs_lons
         )
     return aligned_fc, obs_grid, obs_lats, obs_lons
+
+def match_forecast_to_observation(
+    valid_time: Any,
+    observation_dataset: Any,
+    max_delta_hours: float = 12.0
+) -> Tuple[bool, Dict[str, Any]]:
+    """
+    Matches NWP forecast valid time to the exact independent observation accumulation period.
+    
+    Adheres strictly to IMD meteorological conventions:
+    - IMD observation ending at 08:30 IST on Target Date corresponds to 03:00 UTC on Target Date.
+    - Accumulation window: 03:00 UTC (Target Date - 1) to 03:00 UTC (Target Date).
+    
+    Handles:
+    - UTC vs IST conventions
+    - Missing dates or mismatched cycles
+    - Duplicate dates
+    - Lead time alignment verification
+    
+    Returns: (is_matched: bool, details_dict: dict)
+    """
+    import datetime
+
+    # Parse valid_time into datetime
+    if isinstance(valid_time, str):
+        try:
+            # Handle ISO string with optional Z
+            clean_str = valid_time.replace("Z", "+00:00")
+            vt_dt = datetime.datetime.fromisoformat(clean_str)
+            if vt_dt.tzinfo is not None:
+                vt_dt = vt_dt.astimezone(datetime.timezone.utc).replace(tzinfo=None)
+        except Exception as e:
+            return False, {"error": f"INVALID_VALID_TIME: Could not parse '{valid_time}': {e}"}
+    elif isinstance(valid_time, datetime.datetime):
+        vt_dt = valid_time.replace(tzinfo=None) if valid_time.tzinfo else valid_time
+    elif isinstance(valid_time, datetime.date):
+        vt_dt = datetime.datetime(valid_time.year, valid_time.month, valid_time.day, 3, 0)
+    else:
+        return False, {"error": f"INVALID_VALID_TIME_TYPE: {type(valid_time)}"}
+
+    # Extract target date from observation dataset
+    obs_date = None
+    if isinstance(observation_dataset, dict):
+        if "target_date" in observation_dataset:
+            td = observation_dataset["target_date"]
+            if isinstance(td, str):
+                obs_date = datetime.date.fromisoformat(td)
+            elif isinstance(td, (datetime.date, datetime.datetime)):
+                obs_date = td if isinstance(td, datetime.date) else td.date()
+        elif "metadata" in observation_dataset and "target_date" in observation_dataset["metadata"]:
+            obs_date = datetime.date.fromisoformat(observation_dataset["metadata"]["target_date"])
+
+    if obs_date is None:
+        return False, {"error": "OBSERVATION_METADATA_MISSING: Could not find target_date in observation dataset"}
+
+    # IMD accumulation window end is 03:00 UTC on obs_date (08:30 IST)
+    obs_window_end_utc = datetime.datetime(obs_date.year, obs_date.month, obs_date.day, 3, 0)
+    obs_window_start_utc = obs_window_end_utc - datetime.timedelta(days=1)
+
+    delta_hours = abs((vt_dt - obs_window_end_utc).total_seconds()) / 3600.0
+
+    is_matched = delta_hours <= max_delta_hours
+
+    details = {
+        "forecast_valid_time_utc": vt_dt.isoformat() + "Z",
+        "observation_target_date": obs_date.isoformat(),
+        "observation_window_start_utc": obs_window_start_utc.isoformat() + "Z",
+        "observation_window_end_utc": obs_window_end_utc.isoformat() + "Z",
+        "observation_window_ist": f"08:30 IST {obs_window_start_utc.strftime('%Y-%m-%d')} to 08:30 IST {obs_window_end_utc.strftime('%Y-%m-%d')}",
+        "temporal_delta_hours": round(delta_hours, 2),
+        "is_aligned": is_matched,
+        "tolerance_hours": max_delta_hours,
+        "status": "ALIGNED" if is_matched else "TEMPORAL_ALIGNMENT_MISMATCH"
+    }
+
+    return is_matched, details
 

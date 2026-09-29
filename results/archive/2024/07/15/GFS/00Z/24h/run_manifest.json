@@ -1,0 +1,277 @@
+{
+  "run_id": "GFS_20240715_00Z_24h_1790682757",
+  "mode": "DEMO",
+  "data_source": "Synthetic GFS Benchmark (JJAS Simulation)",
+  "provider": "GFS",
+  "cycle": "00Z",
+  "valid_time": "2024-07-16T00:00:00Z",
+  "lead_time": 24,
+  "model_version": "2.1.0-regime-aware",
+  "fallback_used": false,
+  "inference_status": "SUCCESS",
+  "regime": "normal_monsoon",
+  "regime_probabilities": {
+    "normal_monsoon": 0.588,
+    "active_monsoon": 0.059,
+    "break_monsoon": 0.059,
+    "monsoon_depression": 0.059,
+    "coastal_rainfall": 0.059,
+    "orographic_rainfall": 0.059,
+    "western_disturbance": 0.059,
+    "extreme_event": 0.059
+  },
+  "cycle_metadata": {
+    "date": "2024-07-15",
+    "cycle": "00Z",
+    "lead_time_hours": 24,
+    "provider": "GFS",
+    "mode": "DEMO",
+    "execution_time": "2026-09-29T11:52:37.926033+00:00",
+    "freshness": {
+      "status": "FRESH",
+      "age_hours": 0.0,
+      "stale_threshold_hours": 24.0,
+      "is_stale": false
+    },
+    "audit": {
+      "passed": true,
+      "issues": [],
+      "missing_variables": [],
+      "audit_timestamp": "2026-09-29T11:52:37.837139"
+    },
+    "data_source": "Synthetic GFS Benchmark (JJAS Simulation)",
+    "fallback_used": false,
+    "inference_status": "SUCCESS",
+    "spatial_diagnostics": {
+      "max_raw_rain": 90.9,
+      "max_corrected_rain": 96.5,
+      "mean_delta_mm": 3.663127646702964,
+      "displacement_predicted_lat_deg": 0.0,
+      "displacement_predicted_lon_deg": 0.0,
+      "displacement_applied": [
+        0.0,
+        0.0
+      ],
+      "has_scipy": true,
+      "observation_leakage_prevented": true
+    }
+  },
+  "spatial_verification_fss": {
+    "1": 0.611,
+    "3": 0.776,
+    "5": 0.802,
+    "7": 0.812
+  },
+  "district_aggregates": {
+    "Mumbai City": {
+      "mean": 31.5,
+      "max": 45.9,
+      "p90": 41.0,
+      "min": 16.9
+    },
+    "Ratnagiri": {
+      "mean": 56.9,
+      "max": 79.4,
+      "p90": 73.1,
+      "min": 29.4
+    },
+    "Pune": {
+      "mean": 49.5,
+      "max": 56.5,
+      "p90": 54.6,
+      "min": 44.7
+    },
+    "Wayanad": {
+      "mean": 17.4,
+      "max": 29.3,
+      "p90": 25.7,
+      "min": 9.3
+    },
+    "Kozhikode": {
+      "mean": 21.9,
+      "max": 29.3,
+      "p90": 26.6,
+      "min": 17.4
+    },
+    "Udupi": {
+      "mean": 47.8,
+      "max": 59.8,
+      "p90": 58.2,
+      "min": 36.3
+    },
+    "Uttara Kannada": {
+      "mean": 75.0,
+      "max": 96.5,
+      "p90": 92.4,
+      "min": 40.1
+    },
+    "Nagpur": {
+      "mean": 52.0,
+      "max": 62.6,
+      "p90": 60.0,
+      "min": 43.2
+    },
+    "Raipur": {
+      "mean": 69.4,
+      "max": 88.9,
+      "p90": 78.5,
+      "min": 62.8
+    },
+    "Jabalpur": {
+      "mean": 61.6,
+      "max": 66.4,
+      "p90": 65.2,
+      "min": 58.1
+    },
+    "Bhopal": {
+      "mean": 47.8,
+      "max": 52.0,
+      "p90": 51.5,
+      "min": 43.3
+    },
+    "Sambalpur": {
+      "mean": 54.7,
+      "max": 60.2,
+      "p90": 57.9,
+      "min": 51.2
+    },
+    "Cuttack": {
+      "mean": 46.4,
+      "max": 51.8,
+      "p90": 50.7,
+      "min": 40.7
+    },
+    "Balasore": {
+      "mean": 44.6,
+      "max": 50.9,
+      "p90": 49.3,
+      "min": 38.7
+    },
+    "Ranchi": {
+      "mean": 59.6,
+      "max": 74.0,
+      "p90": 68.4,
+      "min": 47.7
+    },
+    "East Khasi Hills": {
+      "mean": 13.9,
+      "max": 18.7,
+      "p90": 16.5,
+      "min": 8.2
+    },
+    "Kamrup": {
+      "mean": 11.6,
+      "max": 14.8,
+      "p90": 14.3,
+      "min": 8.2
+    },
+    "Dibrugarh": {
+      "mean": 13.7,
+      "max": 18.2,
+      "p90": 17.7,
+      "min": 7.4
+    },
+    "Kolkata": {
+      "mean": 38.8,
+      "max": 49.8,
+      "p90": 44.1,
+      "min": 36.0
+    },
+    "Darjeeling": {
+      "mean": 23.5,
+      "max": 31.9,
+      "p90": 29.8,
+      "min": 19.0
+    },
+    "Dehradun": {
+      "mean": 20.6,
+      "max": 37.1,
+      "p90": 29.9,
+      "min": 8.7
+    },
+    "Shimla": {
+      "mean": 19.3,
+      "max": 26.1,
+      "p90": 23.0,
+      "min": 13.6
+    },
+    "New Delhi": {
+      "mean": 19.8,
+      "max": 26.5,
+      "p90": 26.3,
+      "min": 13.6
+    },
+    "Lucknow": {
+      "mean": 22.7,
+      "max": 27.0,
+      "p90": 25.9,
+      "min": 18.4
+    },
+    "Varanasi": {
+      "mean": 44.6,
+      "max": 56.2,
+      "p90": 52.2,
+      "min": 37.5
+    },
+    "Patna": {
+      "mean": 36.4,
+      "max": 46.7,
+      "p90": 46.5,
+      "min": 27.8
+    },
+    "Ahmedabad": {
+      "mean": 25.7,
+      "max": 35.8,
+      "p90": 32.0,
+      "min": 17.6
+    },
+    "Surat": {
+      "mean": 28.2,
+      "max": 37.8,
+      "p90": 33.6,
+      "min": 23.1
+    },
+    "Jaipur": {
+      "mean": 18.6,
+      "max": 25.4,
+      "p90": 24.2,
+      "min": 12.9
+    },
+    "Jodhpur": {
+      "mean": 21.3,
+      "max": 29.1,
+      "p90": 27.8,
+      "min": 13.9
+    },
+    "Bengaluru Urban": {
+      "mean": 16.7,
+      "max": 24.9,
+      "p90": 23.5,
+      "min": 9.5
+    },
+    "Hyderabad": {
+      "mean": 23.2,
+      "max": 32.3,
+      "p90": 31.4,
+      "min": 13.5
+    },
+    "Visakhapatnam": {
+      "mean": 22.2,
+      "max": 29.4,
+      "p90": 26.6,
+      "min": 19.7
+    },
+    "Chennai": {
+      "mean": 14.6,
+      "max": 24.0,
+      "p90": 20.1,
+      "min": 10.8
+    },
+    "Coimbatore": {
+      "mean": 12.6,
+      "max": 17.0,
+      "p90": 15.7,
+      "min": 8.1
+    }
+  }
+}

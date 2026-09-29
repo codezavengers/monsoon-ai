@@ -29,6 +29,9 @@ CANONICAL_VARIABLES = {
     "geopotential_height": "500 hPa Geopotential Height (gpm)"
 }
 
+# Required predictors for full regime-aware post-processing in REAL mode
+REQUIRED_PREDICTORS = ["rainfall_nwp", "temperature", "humidity", "pressure", "wind_speed"]
+
 # Indian Subcontinent geographic bounding box
 INDIA_BBOX = {
     "lat_min": 6.0,
@@ -70,6 +73,26 @@ class BaseNWPAdapter(ABC):
         """
         pass
 
+    @staticmethod
+    def verify_temporal_alignment(
+        init_time: datetime.datetime,
+        lead_time_hours: int,
+        valid_time: datetime.datetime
+    ) -> bool:
+        """
+        Verifies that forecast temporal metadata satisfies:
+        init_time + lead_time = valid_time.
+        """
+        expected_valid = init_time + datetime.timedelta(hours=lead_time_hours)
+        time_diff = abs((expected_valid - valid_time).total_seconds())
+        if time_diff > 300: # 5 minute tolerance
+            raise NWPValidationError(
+                f"TEMPORAL_ALIGNMENT_ERROR: init_time ({init_time.isoformat()}) + "
+                f"lead_time ({lead_time_hours}h) != valid_time ({valid_time.isoformat()}). "
+                f"Expected valid time {expected_valid.isoformat()}."
+            )
+        return True
+
     def validate_spatial_domain(self, lats: np.ndarray, lons: np.ndarray) -> bool:
         """Validates that coordinates span the Indian subcontinent."""
         if len(lats) == 0 or len(lons) == 0:
@@ -90,7 +113,8 @@ class BaseNWPAdapter(ABC):
         self, 
         canonical_name: str, 
         data: np.ndarray, 
-        attrs: Optional[Dict[str, Any]] = None
+        attrs: Optional[Dict[str, Any]] = None,
+        strict_metadata: bool = False
     ) -> Tuple[np.ndarray, Optional[str]]:
         """
         Normalizes NWP variables using dataset metadata / attributes (units, long_name).
@@ -111,7 +135,8 @@ class BaseNWPAdapter(ABC):
             elif raw_units in ["mm", "mm/day", "kg m-2", "kg/m2"]:
                 pass # Already mm
             else:
-                # Value heuristic fallback with explicit warning
+                if strict_metadata and not raw_units:
+                    raise NWPValidationError(f"Rainfall variable has missing units metadata in strict mode.")
                 max_val = float(np.nanmax(data)) if np.any(~np.isnan(data)) else 0.0
                 if max_val < 2.0 and max_val > 0.0:
                     warning = f"Unknown rainfall units '{raw_units}'; converted from meters to mm based on max value {max_val:.4f}."
@@ -128,6 +153,8 @@ class BaseNWPAdapter(ABC):
             elif raw_units in ["c", "celsius", "degc", "degree_c"]:
                 pass
             else:
+                if strict_metadata and not raw_units:
+                    raise NWPValidationError(f"Temperature variable has missing units metadata in strict mode.")
                 mean_t = float(np.nanmean(data)) if np.any(~np.isnan(data)) else 0.0
                 if mean_t > 150.0:
                     data = data - 273.15
@@ -140,6 +167,8 @@ class BaseNWPAdapter(ABC):
             elif raw_units in ["%", "percent", "percentage"]:
                 pass
             else:
+                if strict_metadata and not raw_units:
+                    raise NWPValidationError(f"Humidity variable has missing units metadata in strict mode.")
                 max_h = float(np.nanmax(data)) if np.any(~np.isnan(data)) else 0.0
                 if max_h <= 1.01 and max_h > 0.0:
                     data = data * 100.0
@@ -153,6 +182,8 @@ class BaseNWPAdapter(ABC):
             elif raw_units in ["hpa", "hectopascal", "mbar", "millibar"]:
                 pass
             else:
+                if strict_metadata and not raw_units:
+                    raise NWPValidationError(f"Pressure variable has missing units metadata in strict mode.")
                 mean_p = float(np.nanmean(data)) if np.any(~np.isnan(data)) else 0.0
                 if mean_p > 20000.0:
                     data = data / 100.0
@@ -163,7 +194,8 @@ class BaseNWPAdapter(ABC):
     def validate_variables(
         self, 
         variables: Dict[str, np.ndarray],
-        var_attrs: Optional[Dict[str, Dict[str, Any]]] = None
+        var_attrs: Optional[Dict[str, Dict[str, Any]]] = None,
+        require_all_predictors: bool = False
     ) -> Dict[str, str]:
         """Validates canonical variables, bounds, and normalizes using metadata."""
         warnings = {}
@@ -172,6 +204,11 @@ class BaseNWPAdapter(ABC):
         # Core required variable: rainfall_nwp
         if "rainfall_nwp" not in variables:
             raise NWPValidationError("Missing critical variable: 'rainfall_nwp'")
+
+        if require_all_predictors:
+            for req in REQUIRED_PREDICTORS:
+                if req not in variables:
+                    raise NWPValidationError(f"MISSING_REQUIRED_VARIABLE: '{req}' is missing from NWP dataset.")
             
         for var_name in list(variables.keys()):
             attrs = var_attrs.get(var_name, {})

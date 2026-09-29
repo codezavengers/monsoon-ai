@@ -563,8 +563,19 @@ app.post('/api/predict', (req: Request, res: Response) => {
     const pythonCmd = `python3 -c "import base64, json; from src.inference import run_single_inference; data = json.loads(base64.b64decode('${inputJsonBase64}').decode('utf-8')); print(json.dumps(run_single_inference(data)))"`;
 
     exec(pythonCmd, { maxBuffer: 1024 * 1024 * 5 }, (error, stdout, stderr) => {
+      const isRealMode = String(inputData.mode || process.env.MODE || '').toUpperCase() === 'REAL';
+
       if (error) {
-        // High-fidelity native TypeScript ML fallback
+        if (isRealMode) {
+          // In REAL mode, silent fallback is strictly prohibited
+          return res.status(400).json({
+            success: false,
+            error: stderr?.trim() || error.message || 'Authoritative Python inference failed in REAL mode.',
+            mode: 'REAL',
+            inference_status: 'FAILED'
+          });
+        }
+        // Controlled high-fidelity native TypeScript ML fallback ONLY in DEMO mode
         const prediction = runNativeInference(inputData);
         return res.json({
           success: true,
@@ -574,11 +585,15 @@ app.post('/api/predict', (req: Request, res: Response) => {
 
       try {
         const pyResult = JSON.parse(stdout.trim());
+        if (!pyResult.success && isRealMode) {
+          return res.status(400).json(pyResult);
+        }
+
         return res.json({
           success: true,
           prediction: {
-            mode: pyResult.mode || 'DEMO',
-            data_source: pyResult.data_source || 'Synthetic GFS_0.25deg Benchmark',
+            mode: pyResult.mode || (isRealMode ? 'REAL' : 'DEMO'),
+            data_source: pyResult.data_source || (isRealMode ? 'Operational Feed' : 'Synthetic GFS_0.25deg Benchmark'),
             provider: pyResult.provider || 'GFS_0.25deg',
             cycle: pyResult.cycle || '00Z',
             valid_time: pyResult.valid_time || new Date().toISOString(),
@@ -588,19 +603,23 @@ app.post('/api/predict', (req: Request, res: Response) => {
             inference_status: pyResult.inference_status || 'SUCCESS',
             district: pyResult.district,
             state: pyResult.state,
-            regime: pyResult.regime.predicted,
+            regime: pyResult.regime?.predicted || pyResult.regime_name || 'normal_monsoon',
             regime_details: pyResult.regime,
-            raw_rainfall: pyResult.raw_nwp_rainfall,
-            corrected_rainfall: pyResult.corrected_rainfall,
-            delta: pyResult.delta_correction,
-            heavy_probability: Math.round(pyResult.exceedance_probabilities.heavy_64_5mm * 1000) / 10,
-            very_heavy_probability: Math.round(pyResult.exceedance_probabilities.very_heavy_115_6mm * 1000) / 10,
-            extreme_probability: Math.round(pyResult.exceedance_probabilities.extreme_204_5mm * 1000) / 10,
-            p10: pyResult.uncertainty_intervals.p10,
-            p50: pyResult.uncertainty_intervals.p50,
-            p90: pyResult.uncertainty_intervals.p90,
-            uncertainty_spread: pyResult.uncertainty_intervals.spread,
-            explainability_factors: pyResult.explainability.attribution_factors.map((f: any) => ({
+            raw_rainfall: pyResult.raw_nwp_rainfall ?? pyResult.raw_nwp ?? 0,
+            corrected_rainfall: pyResult.corrected_rainfall ?? 0,
+            delta: pyResult.delta_correction ?? 0,
+            heavy_probability: Math.round((pyResult.exceedance_probabilities?.heavy_64_5mm ?? pyResult.heavy_probability ?? 0) * (pyResult.exceedance_probabilities ? 1000 : 10)) / 10,
+            very_heavy_probability: Math.round((pyResult.exceedance_probabilities?.very_heavy_115_6mm ?? pyResult.very_heavy_probability ?? 0) * (pyResult.exceedance_probabilities ? 1000 : 10)) / 10,
+            extreme_probability: Math.round((pyResult.exceedance_probabilities?.extreme_204_5mm ?? pyResult.extreme_probability ?? 0) * (pyResult.exceedance_probabilities ? 1000 : 10)) / 10,
+            p10: pyResult.uncertainty_intervals?.p10 ?? pyResult.p10 ?? 0,
+            p50: pyResult.uncertainty_intervals?.p50 ?? pyResult.p50 ?? 0,
+            p90: pyResult.uncertainty_intervals?.p90 ?? pyResult.p90 ?? 0,
+            uncertainty_spread: pyResult.uncertainty_intervals?.spread ?? pyResult.uncertainty ?? 0,
+            predicted_delta_lat: pyResult.predicted_delta_lat ?? pyResult.displacement?.predicted_delta_lat ?? 0.0,
+            predicted_delta_lon: pyResult.predicted_delta_lon ?? pyResult.displacement?.predicted_delta_lon ?? 0.0,
+            displacement_confidence: pyResult.displacement_confidence ?? pyResult.displacement?.displacement_confidence ?? 0.8,
+            displacement_model_version: pyResult.displacement_model_version ?? "2.1.0-spatial-ridge",
+            explainability_factors: (pyResult.explainability?.attribution_factors || []).map((f: any) => ({
               name: f.factor,
               impact: f.impact,
               detail: `${f.observation}. ${f.impact}`
@@ -609,7 +628,15 @@ app.post('/api/predict', (req: Request, res: Response) => {
             timestamp: new Date().toISOString()
           }
         });
-      } catch {
+      } catch (parseErr: any) {
+        if (isRealMode) {
+          return res.status(500).json({
+            success: false,
+            error: `Failed to parse Python inference result in REAL mode: ${parseErr.message}`,
+            mode: 'REAL',
+            inference_status: 'FAILED'
+          });
+        }
         const prediction = runNativeInference(inputData);
         return res.json({
           success: true,
@@ -650,42 +677,75 @@ app.get(['/api/nwp/freshness', '/api/operational/freshness'], (req: Request, res
   const provider = (req.query.provider as string) || 'GFS';
   const forceFresh = req.query.simulate === 'fresh';
 
-  // Base providers from operational monitor specification
-  const providers: Record<string, { available: boolean; last_cycle: string; latency_sec: number }> = {
-    GFS: { available: true, last_cycle: "2024-07-15T00:00:00Z", latency_sec: 1.2 },
-    ECMWF: { available: true, last_cycle: "2024-07-15T00:00:00Z", latency_sec: 2.1 },
-    NCMRWF: { available: true, last_cycle: "2024-07-15T00:00:00Z", latency_sec: 1.8 },
-    IMD_OBS: { available: true, last_cycle: "2024-07-15T03:00:00Z", latency_sec: 0.9 }
-  };
-
-  const now = new Date();
-  const selectedProvider = providers[provider] || providers['GFS'];
-  
-  // If simulated fresh cycle, use 3.5 hours ago today
-  let latestCycleIso = selectedProvider.last_cycle;
-  if (forceFresh) {
-    const recentDate = new Date(now.getTime() - 3.5 * 3600 * 1000);
-    latestCycleIso = recentDate.toISOString();
-  }
-
-  const cycleTime = new Date(latestCycleIso);
-  const timeDiffMs = Math.max(0, now.getTime() - cycleTime.getTime());
-  const timeDiffHours = parseFloat((timeDiffMs / (3600 * 1000)).toFixed(2));
-  const isStale = timeDiffHours > 24.0;
-
-  return res.json({
-    success: true,
-    data: {
-      system_time: now.toISOString(),
-      latest_cycle_timestamp: latestCycleIso,
-      provider: provider,
-      active_cycle: "00Z",
-      time_diff_hours: timeDiffHours,
-      time_diff_ms: timeDiffMs,
-      is_stale: isStale,
-      stale_threshold_hours: 24.0,
-      providers: providers
+  // Execute operational monitor to inspect actual filesystem state
+  const pythonCmd = `python3 -c "import json; from src.operational.monitoring import OperationalMonitor; m = OperationalMonitor(); print(json.dumps(m.check_all_providers_health()))"`;
+  exec(pythonCmd, (error, stdout) => {
+    let providers: Record<string, any> = {};
+    if (!error && stdout) {
+      try {
+        providers = JSON.parse(stdout.trim());
+      } catch {
+        providers = {};
+      }
     }
+
+    // Default inspection if python output missing
+    if (Object.keys(providers).length === 0) {
+      for (const p of ['GFS', 'ECMWF', 'NCMRWF', 'IMD_OBS']) {
+        const isObs = p === 'IMD_OBS';
+        const dir = path.join(__dirname, 'data', 'raw', isObs ? 'observations' : 'nwp');
+        const files = fs.existsSync(dir) ? fs.readdirSync(dir).filter(f => isObs || f.toLowerCase().startsWith(p.toLowerCase())) : [];
+        if (files.length > 0) {
+          const fPath = path.join(dir, files[0]);
+          const stat = fs.statSync(fPath);
+          const ageH = Math.max(0, (Date.now() - stat.mtimeMs) / (3600 * 1000));
+          providers[p] = {
+            available: true,
+            status: ageH <= 24.0 ? "HEALTHY" : "STALE",
+            last_file: files[0],
+            last_cycle: stat.mtime.toISOString(),
+            file_size_bytes: stat.size,
+            age_hours: parseFloat(ageH.toFixed(1)),
+            latency_sec: 1.2
+          };
+        } else {
+          providers[p] = {
+            available: false,
+            status: "DATA_MISSING",
+            last_cycle: null,
+            error: `No files found in data/raw/${isObs ? 'observations' : 'nwp'}`
+          };
+        }
+      }
+    }
+
+    const now = new Date();
+    const selectedProvider = providers[provider] || providers['GFS'] || { available: false, last_cycle: null };
+    
+    let latestCycleIso = selectedProvider.last_cycle || now.toISOString();
+    if (forceFresh) {
+      latestCycleIso = new Date(now.getTime() - 3.5 * 3600 * 1000).toISOString();
+    }
+
+    const cycleTime = new Date(latestCycleIso);
+    const timeDiffMs = Math.max(0, now.getTime() - cycleTime.getTime());
+    const timeDiffHours = parseFloat((timeDiffMs / (3600 * 1000)).toFixed(2));
+    const isStale = selectedProvider.status === 'STALE' || timeDiffHours > 24.0;
+
+    return res.json({
+      success: true,
+      data: {
+        system_time: now.toISOString(),
+        latest_cycle_timestamp: latestCycleIso,
+        provider: provider,
+        active_cycle: "00Z",
+        time_diff_hours: timeDiffHours,
+        time_diff_ms: timeDiffMs,
+        is_stale: isStale,
+        stale_threshold_hours: 24.0,
+        providers: providers
+      }
+    });
   });
 });
 
@@ -698,7 +758,19 @@ app.get(['/api/model/monitoring', '/api/monitoring/drift'], (req: Request, res: 
     const simulationMode = (req.query.simulate_drift as string) || 'none'; // 'none', 'moderate', 'extreme'
     const leadClean = leadTime.replace('+', '').replace('h', '');
 
-    // Canonical Baseline Training Dataset Statistics (2018-2022 JJAS Corpus)
+    // Dynamically retrieve baseline training statistics from results/summary_metrics.json
+    let baselineStats: Record<string, { train_mean: number; train_std: number }> = {};
+    const summaryPath = path.join(__dirname, 'results', 'summary_metrics.json');
+    if (fs.existsSync(summaryPath)) {
+      try {
+        const sm = JSON.parse(fs.readFileSync(summaryPath, 'utf-8'));
+        if (sm.baseline_training_statistics) {
+          baselineStats = sm.baseline_training_statistics;
+        }
+      } catch {}
+    }
+
+    // Canonical Baseline Training Dataset Statistics
     const BASELINE_TRAINING: Record<string, {
       name: string;
       unit: string;
@@ -712,48 +784,48 @@ app.get(['/api/model/monitoring', '/api/monitoring/drift'], (req: Request, res: 
         unit: "mm/day",
         category: "precipitation",
         description: "Numerical Weather Prediction cumulative 24-hr surface precipitation accumulation",
-        train_mean: 14.8,
-        train_std: 24.2
+        train_mean: baselineStats.rainfall_nwp?.train_mean ?? 14.8,
+        train_std: baselineStats.rainfall_nwp?.train_std ?? 24.2
       },
       temperature: {
         name: "2m Air Temperature",
         unit: "°C",
         category: "thermodynamic",
         description: "Screen-level thermodynamic surface ambient air temperature",
-        train_mean: 27.4,
-        train_std: 3.8
+        train_mean: baselineStats.temperature?.train_mean ?? 27.4,
+        train_std: baselineStats.temperature?.train_std ?? 3.8
       },
       humidity: {
         name: "Relative Humidity",
         unit: "%",
         category: "thermodynamic",
         description: "Near-surface atmospheric relative humidity",
-        train_mean: 79.5,
-        train_std: 12.8
+        train_mean: baselineStats.humidity?.train_mean ?? 79.5,
+        train_std: baselineStats.humidity?.train_std ?? 12.8
       },
       pressure: {
         name: "Surface Air Pressure",
         unit: "hPa",
         category: "surface",
         description: "Atmospheric mean sea level / surface barometric pressure",
-        train_mean: 996.2,
-        train_std: 8.5
+        train_mean: baselineStats.pressure?.train_mean ?? 996.2,
+        train_std: baselineStats.pressure?.train_std ?? 8.5
       },
       wind_speed: {
         name: "10m Wind Speed",
         unit: "m/s",
         category: "kinematic",
         description: "Surface wind magnitude at 10-meter operational elevation",
-        train_mean: 11.2,
-        train_std: 5.6
+        train_mean: baselineStats.wind_speed?.train_mean ?? 11.2,
+        train_std: baselineStats.wind_speed?.train_std ?? 5.6
       },
       cape: {
         name: "CAPE (Convective Energy)",
         unit: "J/kg",
         category: "thermodynamic",
         description: "Convective Available Potential Energy for deep monsoon convection",
-        train_mean: 1680.0,
-        train_std: 720.0
+        train_mean: baselineStats.cape?.train_mean ?? 1680.0,
+        train_std: baselineStats.cape?.train_std ?? 720.0
       },
       vertical_velocity: {
         name: "Vertical Velocity (ω)",

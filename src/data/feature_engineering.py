@@ -32,14 +32,13 @@ FEATURE_NAMES = [
     "month",
     "day_of_year",
     "is_monsoon_core", # July-August indicator
-    "lead_time_hours",
-    # Historical / Context
-    "nwp_bias_prior"
+    "lead_time_hours"
 ]
 
 def engineer_features_single(row: Dict[str, Any]) -> Dict[str, float]:
     """
     Computes all engineered meteorological features for a single record.
+    ZERO LEAKAGE: No current or future observation-derived features are used.
     """
     rain = max(0.0, float(row.get("rainfall_nwp", 0.0)))
     temp = float(row.get("temperature", 28.0))
@@ -57,7 +56,6 @@ def engineer_features_single(row: Dict[str, Any]) -> Dict[str, float]:
     day = int(row.get("day", 15))
     day_of_year = int(row.get("day_of_year", 196))
     lead_time = float(row.get("lead_time_hours", 24.0))
-    bias_prior = float(row.get("nwp_bias_prior", 0.0))
     
     # Wind components: U (zonal) and V (meridional)
     rad = math.radians(wind_dir)
@@ -98,8 +96,7 @@ def engineer_features_single(row: Dict[str, Any]) -> Dict[str, float]:
         "month": float(month),
         "day_of_year": float(day_of_year),
         "is_monsoon_core": is_monsoon_core,
-        "lead_time_hours": lead_time,
-        "nwp_bias_prior": bias_prior
+        "lead_time_hours": lead_time
     }
 
 def engineer_features_dataset(records: List[Dict[str, Any]]) -> np.ndarray:

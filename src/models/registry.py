@@ -70,6 +70,14 @@ def register_model_metadata(
         "environment": {
             "python_version": sys.version.split()[0],
             "sklearn_version": SKLEARN_VERSION,
+            "package_versions": {
+                "numpy": getattr(__import__("numpy", fromlist=["__version__"]), "__version__", "unknown"),
+                "scipy": getattr(__import__("scipy", fromlist=["__version__"]), "__version__", "unknown"),
+                "pandas": getattr(__import__("pandas", fromlist=["__version__"]), "__version__", "unknown"),
+                "sklearn": SKLEARN_VERSION,
+                "xarray": getattr(__import__("xarray", fromlist=["__version__"]), "__version__", "unknown"),
+                "netCDF4": getattr(__import__("netCDF4", fromlist=["__version__"]), "__version__", "unknown")
+            },
             "feature_schema_version": "2.0.0",
             "git_commit": git_commit or "uncommitted_workspace"
         },

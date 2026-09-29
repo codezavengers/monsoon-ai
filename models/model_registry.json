@@ -71,11 +71,19 @@
   "TestRegimeModel_v1.0.0-test_24h": {
     "model_name": "TestRegimeModel",
     "version": "1.0.0-test",
-    "training_timestamp": "2026-09-28T13:20:46.496365+00:00",
+    "training_timestamp": "2026-09-29T11:52:37.108088+00:00",
     "mode": "DEMO",
     "environment": {
       "python_version": "3.11.2",
       "sklearn_version": "1.2.1",
+      "package_versions": {
+        "numpy": "1.24.2",
+        "scipy": "1.10.1",
+        "pandas": "1.5.3",
+        "sklearn": "1.2.1",
+        "xarray": "999",
+        "netCDF4": "1.6.2"
+      },
       "feature_schema_version": "2.0.0",
       "git_commit": "uncommitted_workspace"
     },

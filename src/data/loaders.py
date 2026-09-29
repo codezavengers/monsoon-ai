@@ -157,8 +157,7 @@ def generate_synthetic_monsoon_dataset(
                     "vertical_velocity": round(omega, 3),
                     "lead_time_hours": 24,
                     "rainfall_nwp": round(nwp_rain, 1),
-                    "rainfall_obs": round(true_rain, 1),
-                    "nwp_bias_prior": round(nwp_rain - true_rain, 1) # Prior running bias proxy
+                    "rainfall_obs": round(true_rain, 1)
                 }
                 
                 # Tag regime rule
@@ -269,6 +268,11 @@ def build_real_monsoon_dataset(
             fc_lons = nwp_data["grid_lons"]
             fc_vars = nwp_data["variables"]
 
+            # Enforce that required predictors exist without silent fallback substitution
+            for req in ["rainfall_nwp", "temperature", "humidity", "pressure"]:
+                if req not in fc_vars:
+                    raise NWPValidationError(f"MISSING_REQUIRED_VARIABLE: NWP file '{nwp_path}' is missing required variable '{req}'.")
+
             # Load corresponding independent observation
             obs_loaded = None
             for obs_path in obs_files:
@@ -296,7 +300,7 @@ def build_real_monsoon_dataset(
                 method="bilinear"
             )
 
-            # Map aligned grid to representative Indian districts
+            # Map aligned grid to representative Indian districts (for district validation/reporting)
             for dist in INDIAN_DISTRICTS:
                 dlat = dist["lat"]
                 dlon = dist["lon"]
@@ -326,13 +330,13 @@ def build_real_monsoon_dataset(
                     "lead_time_hours": lead_h,
                     "rainfall_nwp": r_nwp,
                     "rainfall_obs": r_obs,
-                    "temperature": float(fc_vars.get("temperature", np.full_like(fc_vars["rainfall_nwp"], 27.0))[i, j]) if "temperature" in fc_vars else 27.0,
-                    "humidity": float(fc_vars.get("humidity", np.full_like(fc_vars["rainfall_nwp"], 80.0))[i, j]) if "humidity" in fc_vars else 80.0,
-                    "pressure": float(fc_vars.get("pressure", np.full_like(fc_vars["rainfall_nwp"], 1002.0))[i, j]) if "pressure" in fc_vars else 1002.0,
-                    "wind_speed": float(fc_vars.get("wind_speed", np.full_like(fc_vars["rainfall_nwp"], 10.0))[i, j]) if "wind_speed" in fc_vars else 10.0,
-                    "wind_direction": float(fc_vars.get("wind_direction", np.full_like(fc_vars["rainfall_nwp"], 230.0))[i, j]) if "wind_direction" in fc_vars else 230.0,
-                    "cape": float(fc_vars.get("cape", np.full_like(fc_vars["rainfall_nwp"], 1500.0))[i, j]) if "cape" in fc_vars else 1500.0,
-                    "vertical_velocity": float(fc_vars.get("vertical_velocity", np.full_like(fc_vars["rainfall_nwp"], -0.2))[i, j]) if "vertical_velocity" in fc_vars else -0.2
+                    "temperature": float(fc_vars["temperature"][i, j]),
+                    "humidity": float(fc_vars["humidity"][i, j]),
+                    "pressure": float(fc_vars["pressure"][i, j]),
+                    "wind_speed": float(fc_vars["wind_speed"][i, j]) if "wind_speed" in fc_vars else float(np.sqrt(fc_vars.get("wind_u", np.zeros_like(r_nwp))[i, j]**2 + fc_vars.get("wind_v", np.zeros_like(r_nwp))[i, j]**2)),
+                    "wind_direction": float(fc_vars["wind_direction"][i, j]) if "wind_direction" in fc_vars else 230.0,
+                    "cape": float(fc_vars["cape"][i, j]) if "cape" in fc_vars else 1200.0,
+                    "vertical_velocity": float(fc_vars["vertical_velocity"][i, j]) if "vertical_velocity" in fc_vars else -0.15
                 }
 
                 # Add physical reference regime
@@ -359,6 +363,175 @@ def build_real_monsoon_dataset(
     }
 
     return records, manifest
+
+
+def build_real_grid_dataset(
+    nwp_dir: str = "data/raw/nwp",
+    obs_dir: str = "data/raw/observations",
+    provider: str = "GFS",
+    resolution_deg: float = 0.25,
+    lead_times: List[int] = None,
+    grid_stride: int = 2
+) -> Tuple[List[Dict[str, Any]], Dict[str, Any]]:
+    """
+    Builds the primary full-grid training dataset directly from the complete 2D common India grid.
+    
+    Each training example corresponds to a genuine grid coordinate cell across India:
+    (time, init_time, valid_time, lead_time, lat, lon, NWP variables, observed rainfall, regime, terrain).
+    District forecasts are subsequently derived from the corrected 2D grid, not used as the primary model domain.
+    """
+    lead_times = lead_times or [24]
+    adapter = get_nwp_adapter(provider)
+    obs_provider = IMDGriddedObservationProvider(resolution_deg=resolution_deg)
+
+    if not os.path.exists(nwp_dir):
+        raise NWPValidationError(f"NWP_DATA_UNAVAILABLE: Directory '{nwp_dir}' does not exist.")
+    if not os.path.exists(obs_dir):
+        raise ObservationValidationError(f"OBSERVATION_UNAVAILABLE: Directory '{obs_dir}' does not exist.")
+
+    nwp_files = [os.path.join(nwp_dir, f) for f in os.listdir(nwp_dir) if f.endswith((".nc", ".nc4", ".grb2", ".grib2", ".csv"))]
+    obs_files = [os.path.join(obs_dir, f) for f in os.listdir(obs_dir) if f.endswith((".nc", ".nc4", ".csv"))]
+
+    if not nwp_files:
+        raise NWPValidationError(f"NWP_DATA_UNAVAILABLE: No compatible NWP files in '{nwp_dir}'.")
+    if not obs_files:
+        raise ObservationValidationError(f"OBSERVATION_UNAVAILABLE: No compatible observation files in '{obs_dir}'.")
+
+    grid_records: List[Dict[str, Any]] = []
+    provenance_log: List[Dict[str, Any]] = []
+
+    for nwp_path in nwp_files:
+        for lead_h in lead_times:
+            fname = os.path.basename(nwp_path).lower()
+            target_date = datetime.date(2024, 7, 15)
+            for part in fname.replace("-", "_").split("_"):
+                if len(part) == 8 and part.isdigit():
+                    try:
+                        target_date = datetime.date(int(part[:4]), int(part[4:6]), int(part[6:8]))
+                        break
+                    except ValueError:
+                        pass
+
+            init_time = datetime.datetime(target_date.year, target_date.month, target_date.day, 0, 0)
+            valid_time = init_time + datetime.timedelta(hours=lead_h)
+
+            nwp_data = adapter.load_data(nwp_path, lead_time_hours=lead_h)
+            fc_lats = nwp_data["grid_lats"]
+            fc_lons = nwp_data["grid_lons"]
+            fc_vars = nwp_data["variables"]
+
+            for req in ["rainfall_nwp", "temperature", "humidity", "pressure"]:
+                if req not in fc_vars:
+                    raise NWPValidationError(f"MISSING_REQUIRED_VARIABLE: NWP file '{nwp_path}' is missing required variable '{req}'.")
+
+            obs_loaded = None
+            for obs_path in obs_files:
+                try:
+                    obs_loaded = obs_provider.load_observations(obs_path, target_date=target_date)
+                    break
+                except Exception:
+                    continue
+
+            if obs_loaded is None:
+                continue
+
+            obs_rain = obs_loaded["rainfall_obs"]
+            obs_lats = obs_loaded["grid_lats"]
+            obs_lons = obs_loaded["grid_lons"]
+
+            aligned_rain_nwp, aligned_obs, com_lats, com_lons = align_forecast_and_observation(
+                fc_grid=fc_vars["rainfall_nwp"],
+                fc_lats=fc_lats,
+                fc_lons=fc_lons,
+                obs_grid=obs_rain,
+                obs_lats=obs_lats,
+                obs_lons=obs_lons,
+                method="bilinear"
+            )
+
+            ny, nx = len(com_lats), len(com_lons)
+            step = max(1, grid_stride)
+
+            for i in range(0, ny, step):
+                lat_val = float(com_lats[i])
+                for j in range(0, nx, step):
+                    lon_val = float(com_lons[j])
+                    r_obs = float(aligned_obs[i, j])
+                    r_nwp = float(aligned_rain_nwp[i, j])
+
+                    if np.isnan(r_obs) or np.isnan(r_nwp):
+                        continue
+
+                    # Elevation proxy based on Ghats / Himalayas coordinates
+                    elev_val = 20.0
+                    if 8.0 <= lat_val <= 21.0 and 73.0 <= lon_val <= 76.5:
+                        elev_val = 650.0 # Western Ghats ridge
+                    elif lat_val >= 28.0 and lon_val >= 78.0:
+                        elev_val = 1400.0 # Himalayan foothills
+                    elif 21.0 <= lat_val <= 25.0 and 75.0 <= lon_val <= 84.0:
+                        elev_val = 350.0 # Central plateau
+
+                    # Coast distance proxy
+                    coast_km = 300.0
+                    if lon_val <= 73.5 or lon_val >= 86.5 or lat_val <= 12.0:
+                        coast_km = 15.0
+
+                    rec = {
+                        "year": target_date.year,
+                        "month": target_date.month,
+                        "day": target_date.day,
+                        "day_of_year": target_date.timetuple().tm_yday,
+                        "time": valid_time.isoformat() + "Z",
+                        "init_time": init_time.isoformat() + "Z",
+                        "valid_time": valid_time.isoformat() + "Z",
+                        "lead_time": lead_h,
+                        "lead_time_hours": lead_h,
+                        "lat": lat_val,
+                        "lon": lon_val,
+                        "elevation": elev_val,
+                        "coast_dist_km": coast_km,
+                        "zone": "Western Ghats" if elev_val >= 500 and lon_val < 77 else ("Coastal" if coast_km < 50 else "Inland"),
+                        "rainfall_nwp": r_nwp,
+                        "rainfall_obs": r_obs,
+                        "temperature": float(fc_vars["temperature"][min(i, fc_vars["temperature"].shape[0]-1), min(j, fc_vars["temperature"].shape[1]-1)]),
+                        "humidity": float(fc_vars["humidity"][min(i, fc_vars["humidity"].shape[0]-1), min(j, fc_vars["humidity"].shape[1]-1)]),
+                        "pressure": float(fc_vars["pressure"][min(i, fc_vars["pressure"].shape[0]-1), min(j, fc_vars["pressure"].shape[1]-1)]),
+                        "wind_speed": float(fc_vars["wind_speed"][min(i, fc_vars["wind_speed"].shape[0]-1), min(j, fc_vars["wind_speed"].shape[1]-1)]) if "wind_speed" in fc_vars else 10.0,
+                        "wind_direction": float(fc_vars.get("wind_direction", np.full_like(fc_vars["rainfall_nwp"], 230.0))[min(i, fc_vars["rainfall_nwp"].shape[0]-1), min(j, fc_vars["rainfall_nwp"].shape[1]-1)]),
+                        "cape": float(fc_vars.get("cape", np.full_like(fc_vars["rainfall_nwp"], 1400.0))[min(i, fc_vars["rainfall_nwp"].shape[0]-1), min(j, fc_vars["rainfall_nwp"].shape[1]-1)]),
+                        "vertical_velocity": float(fc_vars.get("vertical_velocity", np.full_like(fc_vars["rainfall_nwp"], -0.15))[min(i, fc_vars["rainfall_nwp"].shape[0]-1), min(j, fc_vars["rainfall_nwp"].shape[1]-1)])
+                    }
+                    rule_label = classify_regime_rule(rec)
+                    rec["regime"] = rule_label
+                    rec["rule_reference_regime"] = rule_label
+                    rec["terrain_features"] = {
+                        "elevation": elev_val,
+                        "coast_dist_km": coast_km,
+                        "zone": rec["zone"]
+                    }
+                    grid_records.append(rec)
+
+            provenance_log.append({
+                "nwp_source": nwp_path,
+                "observation_source": obs_loaded["metadata"]["source_file"],
+                "target_date": target_date.isoformat(),
+                "lead_time_hours": lead_h,
+                "grid_cells_extracted": len(grid_records)
+            })
+
+    if not grid_records:
+        raise NWPValidationError("DATA_UNAVAILABLE: Could not build full grid training dataset from real files.")
+
+    manifest = {
+        "mode": "REAL_FULL_GRID",
+        "provider": provider,
+        "total_records": len(grid_records),
+        "provenance": provenance_log,
+        "grid_resolution_deg": resolution_deg,
+        "created_at": datetime.datetime.now(datetime.timezone.utc).isoformat()
+    }
+    return grid_records, manifest
+
 
 def save_records_to_csv(records: List[Dict[str, Any]], filepath: str) -> None:
     """Saves records to CSV format."""

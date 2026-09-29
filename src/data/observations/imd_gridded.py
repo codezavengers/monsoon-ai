@@ -83,15 +83,26 @@ class IMDGriddedObservationProvider(BaseObservationProvider):
                 date_str = target_date.strftime("%Y-%m-%d")
                 rain_slice = ds[rain_var].sel({time_coord: date_str}).values
             except Exception:
-                # Attempt string or day matching
+                # Attempt exact day matching in coordinate values
+                time_vals = ds[time_coord].values
+                target_dt = np.datetime64(target_date)
                 try:
-                    time_vals = ds[time_coord].values
-                    target_dt = np.datetime64(target_date)
-                    diffs = np.abs(time_vals.astype("datetime64[D]") - target_dt)
-                    best_idx = int(np.argmin(diffs))
+                    day_diffs = np.abs(time_vals.astype("datetime64[D]") - target_dt)
+                    min_diff = int(np.min(day_diffs) / np.timedelta64(1, "D"))
+                    if min_diff != 0:
+                        raise ObservationValidationError(
+                            f"OBSERVATION_DATE_NOT_FOUND: Exact observation date {target_date} is not present in "
+                            f"IMD dataset '{filepath}'. Closest date delta is {min_diff} day(s). "
+                            f"Silent fallback to nearest or first date is strictly prohibited in REAL mode."
+                        )
+                    best_idx = int(np.argmin(day_diffs))
                     rain_slice = ds[rain_var].values[best_idx]
-                except Exception:
-                    rain_slice = ds[rain_var].values[0]
+                except Exception as e:
+                    if isinstance(e, ObservationValidationError):
+                        raise
+                    raise ObservationValidationError(
+                        f"OBSERVATION_DATE_NOT_FOUND: Failed to match target date {target_date} in '{filepath}': {e}"
+                    )
         else:
             rain_slice = ds[rain_var].values
             if rain_slice.ndim == 3:
@@ -146,10 +157,10 @@ class IMDGriddedObservationProvider(BaseObservationProvider):
                         matched_points.append(row)
 
         if not matched_points:
-            # Check if multi-station file exists and read records
-            with open(filepath, "r", encoding="utf-8") as f:
-                reader = csv.DictReader(f)
-                matched_points = [r for idx, r in enumerate(reader) if idx < 300]
+            raise ObservationValidationError(
+                f"OBSERVATION_DATE_NOT_FOUND: Observation date {target_date} was not found in CSV file '{filepath}'. "
+                f"Arbitrary row fallback is strictly disallowed in REAL mode."
+            )
 
         lats = sorted(list(set(float(r["lat"]) for r in matched_points if "lat" in r)))
         lons = sorted(list(set(float(r["lon"]) for r in matched_points if "lon" in r)))
