@@ -2,21 +2,31 @@
   "RegimeAwareRainfallAI_v1.0.0_24h": {
     "model_name": "RegimeAwareRainfallAI",
     "version": "1.0.0",
-    "training_timestamp": "2026-09-28T13:17:31.068509+00:00",
+    "training_timestamp": "2026-09-29T12:57:15.055702+00:00",
     "mode": "DEMO",
     "environment": {
       "python_version": "3.11.2",
       "sklearn_version": "1.2.1",
-      "feature_schema_version": "2.0.0",
+      "package_versions": {
+        "numpy": "1.24.2",
+        "scipy": "1.10.1",
+        "pandas": "1.5.3",
+        "sklearn": "1.2.1",
+        "xarray": "999",
+        "netCDF4": "1.6.2"
+      },
+      "feature_schema_version": "2.1.0",
       "git_commit": "uncommitted_workspace"
     },
     "dataset_provenance": {
-      "dataset_version": "1.0.0",
-      "dataset_hash": "synthetic_seed42",
+      "dataset_version": "2.1.0",
+      "dataset_hash": "2dc19a69e83d3ed367422bbb65cdb4efc74d7f0d5b82cc0d5707be094dd599ce",
       "nwp_provider": "GFS 0.25\u00b0 / NCMRWF NCUM compatible",
       "nwp_cycle": "00Z",
       "observation_source": "IMD_Gridded_0.25deg",
-      "calibration_dataset": "2023_JJAS_Validation"
+      "calibration_dataset": "2023_JJAS_Validation",
+      "nwp_file_hashes": {},
+      "observation_file_hashes": {}
     },
     "splits": {
       "training_period": "2018-2022 (JJAS)",
@@ -48,8 +58,7 @@
         "month",
         "day_of_year",
         "is_monsoon_core",
-        "lead_time_hours",
-        "nwp_bias_prior"
+        "lead_time_hours"
       ]
     },
     "hyperparameters": {
@@ -58,20 +67,25 @@
       "routing": "soft_mixture"
     },
     "metrics": {
-      "test_accuracy": 0.993,
-      "fss_5x5": 0.964
+      "test_accuracy": 0.99,
+      "fss_5x5": 0.156
     },
     "calibration": {
       "method": "sigmoid_platt",
-      "brier_score_heavy": 0.0019
+      "brier_score_heavy": 0.0444
     },
     "random_seed": 42,
-    "artifact_hashes": {}
+    "artifact_hashes": {
+      "regime_classifier.pkl": "66e5d46fcb0ac9c534dfe4c04bc9a6c7d4a546bf777016f7d4d9858d865f311c",
+      "regime_ml_model.pkl": "0c10dcdf000513c2eee39858e08a2f9e29bba694506f4196f56c86f868577039",
+      "prob_predictor.pkl": "527bbf42066d70bc66a7bd974697a8f4bde34bb451af07cc5dafdf5382ac5433",
+      "predictive_displacement.pkl": "978b11421d64ca1ed708a11d1596504b059c36fbf7e9661d767f22300da6a8f5"
+    }
   },
   "TestRegimeModel_v1.0.0-test_24h": {
     "model_name": "TestRegimeModel",
     "version": "1.0.0-test",
-    "training_timestamp": "2026-09-29T11:52:37.108088+00:00",
+    "training_timestamp": "2026-09-29T12:54:42.629674+00:00",
     "mode": "DEMO",
     "environment": {
       "python_version": "3.11.2",
@@ -84,16 +98,18 @@
         "xarray": "999",
         "netCDF4": "1.6.2"
       },
-      "feature_schema_version": "2.0.0",
+      "feature_schema_version": "2.1.0",
       "git_commit": "uncommitted_workspace"
     },
     "dataset_provenance": {
-      "dataset_version": "1.0.0",
-      "dataset_hash": "synthetic_seed42",
+      "dataset_version": "2.1.0",
+      "dataset_hash": "44a15ce27058932266d5ad20680459c88c05c0c6b034c123225532b3a3c423e0",
       "nwp_provider": "GFS_0.25deg",
       "nwp_cycle": "00Z",
       "observation_source": "IMD_Gridded_0.25deg",
-      "calibration_dataset": "2023_JJAS_Validation"
+      "calibration_dataset": "2023_JJAS_Validation",
+      "nwp_file_hashes": {},
+      "observation_file_hashes": {}
     },
     "splits": {
       "training_period": "2018-2022",
@@ -119,6 +135,11 @@
       "method": "platt"
     },
     "random_seed": 42,
-    "artifact_hashes": {}
+    "artifact_hashes": {
+      "regime_classifier.pkl": "66e5d46fcb0ac9c534dfe4c04bc9a6c7d4a546bf777016f7d4d9858d865f311c",
+      "regime_ml_model.pkl": "0c10dcdf000513c2eee39858e08a2f9e29bba694506f4196f56c86f868577039",
+      "prob_predictor.pkl": "527bbf42066d70bc66a7bd974697a8f4bde34bb451af07cc5dafdf5382ac5433",
+      "predictive_displacement.pkl": "978b11421d64ca1ed708a11d1596504b059c36fbf7e9661d767f22300da6a8f5"
+    }
   }
 }

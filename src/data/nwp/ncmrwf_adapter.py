@@ -28,10 +28,14 @@ class NCMRWFAdapter(BaseNWPAdapter):
         self,
         source_path: str,
         lead_time_hours: int = 24,
-        init_time: Optional[datetime.datetime] = None
+        init_time: Optional[datetime.datetime] = None,
+        mode: Optional[str] = None
     ) -> Dict[str, Any]:
         if not os.path.exists(source_path):
             raise FileNotFoundError(f"NCMRWF data file not found at: {source_path}")
+
+        current_mode = mode or os.environ.get("MODE", "DEMO")
+        self.validate_data_mode_path(source_path, mode=current_mode)
 
         ext = os.path.splitext(source_path)[-1].lower()
         if ext in [".nc", ".nc4", ".grb2", ".grib2"] and XARRAY_AVAILABLE:
@@ -72,6 +76,15 @@ class NCMRWFAdapter(BaseNWPAdapter):
                             hours_list.append(0.0)
                 hours_arr = np.array(hours_list)
                 diffs = np.abs(hours_arr - lead_time_hours)
+                min_diff = float(np.min(diffs))
+
+                if min_diff > 0.5 and current_mode.upper() == "REAL":
+                    raise NWPValidationError(
+                        f"LEAD_TIME_NOT_AVAILABLE: Requested lead +{lead_time_hours}h is not present in "
+                        f"NCMRWF forecast '{source_path}'. Available leads: {[int(h) for h in hours_arr]}. "
+                        f"Silent selection of nearest lead is strictly prohibited in REAL mode."
+                    )
+
                 step_idx = int(np.argmin(diffs))
                 actual_lead_h = int(hours_arr[step_idx])
 
@@ -139,8 +152,13 @@ class NCMRWFAdapter(BaseNWPAdapter):
                 }
             }
         else:
+            if current_mode.upper() == "REAL":
+                raise NWPValidationError(
+                    f"NCMRWF_AUTHENTIC_DATA_REQUIRED: Format for '{source_path}' cannot be substituted with generic GFS logic in REAL mode. "
+                    f"Authentic NCMRWF NCUM NetCDF or GRIB2 data is strictly required."
+                )
             from src.data.nwp.gfs_adapter import GFSAdapter
             gfs = GFSAdapter()
-            res = gfs.load_data(source_path, lead_time_hours, init_time)
+            res = gfs.load_data(source_path, lead_time_hours, init_time, mode="DEMO")
             res["provider"] = self.provider_name
             return res

@@ -555,7 +555,10 @@ app.post('/api/predict', (req: Request, res: Response) => {
       vertical_velocity: Number(req.body.vertical_velocity ?? -0.35),
       lead_time_hours: Number(req.body.lead_time_hours ?? 24),
       district_name: req.body.district_name || 'Custom Station',
-      state_name: req.body.state_name || 'India'
+      state_name: req.body.state_name || 'India',
+      mode: req.body.mode || process.env.MODE || 'DEMO',
+      provider: req.body.provider || 'GFS_0.25deg',
+      cycle: req.body.cycle || '00Z'
     };
 
     // Serialize JSON safely for shell command execution if python is available

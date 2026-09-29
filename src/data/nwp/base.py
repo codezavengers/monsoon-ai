@@ -40,6 +40,9 @@ INDIA_BBOX = {
     "lon_max": 98.0
 }
 
+# Data modes supported across the forecasting system
+DATA_MODES = ["DEMO", "TEST_FIXTURE", "REAL"]
+
 class NWPValidationError(Exception):
     """Raised when NWP data fails unit, coordinate, or variable completeness checks."""
     pass
@@ -54,6 +57,22 @@ class BaseNWPAdapter(ABC):
         self.provider_name = provider_name
         self.resolution_deg = resolution_deg
         self.metadata: Dict[str, Any] = {}
+
+    @staticmethod
+    def validate_data_mode_path(source_path: str, mode: str = "REAL"):
+        """
+        Enforces that TEST_FIXTURE paths under data/fixtures are strictly prohibited in REAL mode.
+        Authentic external data sources must be provided in REAL mode.
+        """
+        mode_clean = str(mode).strip().upper()
+        norm_path = os.path.normpath(source_path).replace("\\", "/")
+        if mode_clean == "REAL":
+            if "data/fixtures" in norm_path or "fixtures" in norm_path.split("/"):
+                raise NWPValidationError(
+                    f"FIXTURE_IN_REAL_MODE_PROHIBITED: Path '{source_path}' is inside data/fixtures. "
+                    f"Test fixtures are strictly reserved for TEST_FIXTURE mode. REAL mode must use authentic external datasets."
+                )
+
         
     @abstractmethod
     def load_data(

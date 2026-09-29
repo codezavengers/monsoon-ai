@@ -29,23 +29,28 @@ class ECMWFAdapter(BaseNWPAdapter):
         self,
         source_path: str,
         lead_time_hours: int = 24,
-        init_time: Optional[datetime.datetime] = None
+        init_time: Optional[datetime.datetime] = None,
+        mode: Optional[str] = None
     ) -> Dict[str, Any]:
-        """Loads ECMWF dataset from NetCDF, GRIB2 or structured fallback."""
+        """Loads ECMWF dataset from NetCDF, GRIB2 or provider-native format."""
         if not os.path.exists(source_path):
             raise FileNotFoundError(f"ECMWF data file not found at: {source_path}")
 
+        current_mode = mode or os.environ.get("MODE", "DEMO")
+        self.validate_data_mode_path(source_path, mode=current_mode)
+
         ext = os.path.splitext(source_path)[-1].lower()
         if ext in [".nc", ".nc4", ".grb2", ".grib2"] and XARRAY_AVAILABLE:
-            return self._load_from_xarray(source_path, lead_time_hours, init_time)
+            return self._load_from_xarray(source_path, lead_time_hours, init_time, mode=current_mode)
         else:
-            return self._load_fallback(source_path, lead_time_hours, init_time)
+            return self._load_fallback(source_path, lead_time_hours, init_time, mode=current_mode)
 
     def _load_from_xarray(
         self,
         filepath: str,
         lead_time_hours: int,
-        init_time: Optional[datetime.datetime]
+        init_time: Optional[datetime.datetime],
+        mode: str = "DEMO"
     ) -> Dict[str, Any]:
         ds = xr.open_dataset(filepath)
 
@@ -86,6 +91,15 @@ class ECMWFAdapter(BaseNWPAdapter):
                         hours_list.append(0.0)
             hours_arr = np.array(hours_list)
             diffs = np.abs(hours_arr - lead_time_hours)
+            min_diff = float(np.min(diffs))
+
+            if min_diff > 0.5 and mode.upper() == "REAL":
+                raise NWPValidationError(
+                    f"LEAD_TIME_NOT_AVAILABLE: Requested lead +{lead_time_hours}h is not present in "
+                    f"ECMWF forecast '{filepath}'. Available leads: {[int(h) for h in hours_arr]}. "
+                    f"Silent selection of nearest lead is strictly prohibited in REAL mode."
+                )
+
             step_idx = int(np.argmin(diffs))
             actual_lead_h = int(hours_arr[step_idx])
 
@@ -157,11 +171,18 @@ class ECMWFAdapter(BaseNWPAdapter):
         self,
         filepath: str,
         lead_time_hours: int,
-        init_time: Optional[datetime.datetime]
+        init_time: Optional[datetime.datetime],
+        mode: str = "DEMO"
     ) -> Dict[str, Any]:
-        """Generic fallback for JSON or CSV."""
+        """Loads ECMWF tabular/JSON fallback or rejects if in REAL mode."""
+        if mode.upper() == "REAL":
+            raise NWPValidationError(
+                f"ECMWF_AUTHENTIC_DATA_REQUIRED: Format for '{filepath}' cannot be substituted with generic GFS logic in REAL mode. "
+                f"Authentic ECMWF HRES NetCDF or GRIB2 data is strictly required."
+            )
         from src.data.nwp.gfs_adapter import GFSAdapter
         gfs = GFSAdapter()
-        res = gfs.load_data(filepath, lead_time_hours, init_time)
+        res = gfs.load_data(filepath, lead_time_hours, init_time, mode="DEMO")
         res["provider"] = self.provider_name
         return res
+

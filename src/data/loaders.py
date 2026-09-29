@@ -136,33 +136,45 @@ def generate_synthetic_monsoon_dataset(
                     
                 nwp_rain = max(0.0, float(nwp_rain))
                 
-                record = {
-                    "year": year,
-                    "month": month,
-                    "day": day,
-                    "day_of_year": day_of_year,
-                    "district": dist["district"],
-                    "state": dist["state"],
-                    "lat": lat,
-                    "lon": lon,
-                    "elevation": elev,
-                    "coast_dist_km": coast,
-                    "zone": zone,
-                    "temperature": round(base_temp, 1),
-                    "pressure": round(base_pres, 1),
-                    "humidity": round(base_rh, 1),
-                    "wind_speed": round(base_wind, 1),
-                    "wind_direction": round(230.0 + random.uniform(-30, 30), 1),
-                    "cape": round(base_cape, 0),
-                    "vertical_velocity": round(omega, 3),
-                    "lead_time_hours": 24,
-                    "rainfall_nwp": round(nwp_rain, 1),
-                    "rainfall_obs": round(true_rain, 1)
-                }
-                
-                # Tag regime rule
-                record["regime"] = classify_regime_rule(record)
-                records.append(record)
+                # Determine which lead times to generate for this district-day
+                # Test years (2024) and validation (2023) include full operational lead suite [6, 12, 24, 48, 72, 120]
+                if year >= 2023 or (day_idx % 7 == 0):
+                    leads_to_gen = [6, 12, 24, 48, 72, 120]
+                else:
+                    leads_to_gen = [24]
+
+                for lead_h in leads_to_gen:
+                    lead_scale = math.sqrt(float(lead_h) / 24.0)
+                    lead_noise = (random.random() - 0.5) * 4.0 * lead_scale
+                    nwp_rain_lead = max(0.0, float(nwp_rain + lead_noise))
+
+                    record = {
+                        "year": year,
+                        "month": month,
+                        "day": day,
+                        "day_of_year": day_of_year,
+                        "district": dist["district"],
+                        "state": dist["state"],
+                        "lat": lat,
+                        "lon": lon,
+                        "elevation": elev,
+                        "coast_dist_km": coast,
+                        "zone": zone,
+                        "temperature": round(base_temp, 1),
+                        "pressure": round(base_pres, 1),
+                        "humidity": round(base_rh, 1),
+                        "wind_speed": round(base_wind, 1),
+                        "wind_direction": round(230.0 + random.uniform(-30, 30), 1),
+                        "cape": round(base_cape, 0),
+                        "vertical_velocity": round(omega, 3),
+                        "lead_time_hours": lead_h,
+                        "rainfall_nwp": round(nwp_rain_lead, 1),
+                        "rainfall_obs": round(true_rain, 1)
+                    }
+                    
+                    # Tag regime rule
+                    record["regime"] = classify_regime_rule(record)
+                    records.append(record)
                 
     return records
 
@@ -403,7 +415,7 @@ def build_real_grid_dataset(
     for nwp_path in nwp_files:
         for lead_h in lead_times:
             fname = os.path.basename(nwp_path).lower()
-            target_date = datetime.date(2024, 7, 15)
+            target_date = None
             for part in fname.replace("-", "_").split("_"):
                 if len(part) == 8 and part.isdigit():
                     try:
@@ -412,10 +424,32 @@ def build_real_grid_dataset(
                     except ValueError:
                         pass
 
+            if target_date is None:
+                # Attempt to extract from file metadata
+                try:
+                    if fname.endswith((".nc", ".nc4")) and XARRAY_AVAILABLE:
+                        import xarray as _xr
+                        with _xr.open_dataset(nwp_path) as _ds:
+                            t_coord = next((c for c in ["time", "init_time"] if c in _ds.coords), None)
+                            if t_coord:
+                                val = _ds[t_coord].values
+                                if hasattr(val, "__iter__"):
+                                    val = val[0]
+                                dt_parsed = np.datetime64(val, "D").astype(datetime.date)
+                                target_date = dt_parsed
+                except Exception:
+                    pass
+
+            if target_date is None:
+                raise NWPValidationError(
+                    f"UNPARSEABLE_CYCLE_DATE: Cannot parse cycle date from NWP filename '{nwp_path}'. "
+                    f"In REAL mode, defaulting to 2024-07-15 or arbitrary dates is strictly prohibited."
+                )
+
             init_time = datetime.datetime(target_date.year, target_date.month, target_date.day, 0, 0)
             valid_time = init_time + datetime.timedelta(hours=lead_h)
 
-            nwp_data = adapter.load_data(nwp_path, lead_time_hours=lead_h)
+            nwp_data = adapter.load_data(nwp_path, lead_time_hours=lead_h, mode="REAL")
             fc_lats = nwp_data["grid_lats"]
             fc_lons = nwp_data["grid_lons"]
             fc_vars = nwp_data["variables"]
@@ -425,15 +459,21 @@ def build_real_grid_dataset(
                     raise NWPValidationError(f"MISSING_REQUIRED_VARIABLE: NWP file '{nwp_path}' is missing required variable '{req}'.")
 
             obs_loaded = None
+            last_obs_err = None
             for obs_path in obs_files:
                 try:
                     obs_loaded = obs_provider.load_observations(obs_path, target_date=target_date)
                     break
-                except Exception:
+                except Exception as e:
+                    last_obs_err = str(e)
                     continue
 
             if obs_loaded is None:
-                continue
+                raise ObservationValidationError(
+                    f"OBSERVATION_UNAVAILABLE: No matching independent IMD observation found for target date "
+                    f"{target_date} and valid time {valid_time}. In REAL mode, skipping observation matching is strictly prohibited. "
+                    f"Last error: {last_obs_err}"
+                )
 
             obs_rain = obs_loaded["rainfall_obs"]
             obs_lats = obs_loaded["grid_lats"]

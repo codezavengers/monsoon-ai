@@ -116,14 +116,17 @@ class ProbabilisticRainfallPredictor:
     def predict_probabilities(
         self,
         X: np.ndarray,
-        predicted_rain: np.ndarray = None
+        predicted_rain: np.ndarray = None,
+        mode: str = "DEMO"
     ) -> Dict[str, np.ndarray]:
         """
         Predicts calibrated probabilities for heavy, very heavy, and extreme rainfall.
         Uses trained ML probability models as the primary estimator.
+        In REAL mode, strictly prohibits logistic sigmoid heuristics.
         """
         n_samples = len(X)
         probs = {}
+        is_real = str(mode).upper() == "REAL"
         
         for name, thresh in self.thresholds.items():
             if self.is_trained and SKLEARN_AVAILABLE and self.models.get(name) is not None:
@@ -133,8 +136,13 @@ class ProbabilisticRainfallPredictor:
                     p = proba_mat[:, 1]
                 else:
                     p = np.zeros(n_samples)
+            elif is_real:
+                raise ValueError(
+                    f"CONFIGURATION_REQUIRED: Trained calibrated probability model for '{name}' is not loaded. "
+                    f"Heuristic logistic fallbacks are strictly prohibited in REAL mode."
+                )
             elif predicted_rain is not None:
-                # Logistic sigmoid fallback only if model unavailable
+                # Logistic sigmoid fallback only in DEMO mode if model unavailable
                 scale = thresh * 0.22
                 z = (predicted_rain - thresh) / scale
                 p = 1.0 / (1.0 + np.exp(-z))
@@ -148,25 +156,33 @@ class ProbabilisticRainfallPredictor:
     def predict_quantiles(
         self,
         X: np.ndarray,
-        point_prediction: np.ndarray
-    ) -> Dict[str, np.ndarray]:
+        point_prediction: np.ndarray,
+        mode: str = "DEMO"
+    ) -> Dict[str, Any]:
         """
         Returns prediction intervals: P10 (optimistic lower bound),
         P50 (median / point prediction), and P90 (high-risk upper bound).
+        In REAL mode, requires trained quantile models and prohibits heuristic scaling.
         """
         n_samples = len(X)
         q_models = getattr(self, "quantile_models", {})
         fallback_used = False
+        is_real = str(mode).upper() == "REAL"
 
-        if "p10" in q_models and "p90" in q_models:
+        if "p10" in q_models and "p90" in q_models and q_models["p10"] is not None:
             p10 = q_models["p10"].predict(X)
             p90 = q_models["p90"].predict(X)
             # Physical bounds: 0 <= P10 <= point_prediction (P50) <= P90
             p10 = np.clip(p10, 0.0, point_prediction)
             p90 = np.maximum(p90, point_prediction)
+        elif is_real:
+            raise ValueError(
+                "CONFIGURATION_REQUIRED: Trained quantile models (P10/P90) are not loaded. "
+                "Empirical heuristic quantiles are strictly prohibited in REAL mode."
+            )
         else:
             fallback_used = True
-            # Empirical regime-scaled uncertainty bounds
+            # Empirical regime-scaled uncertainty bounds (DEMO benchmark only)
             p10 = np.maximum(0.0, point_prediction * 0.70)
             p90 = point_prediction * 1.35 + 5.0
 

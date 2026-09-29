@@ -175,6 +175,27 @@ class RegimeClassifier:
             cm = np.zeros((len(REGIME_NAMES), len(REGIME_NAMES)))
             report = {}
             
+        # Extract clean per-regime summary
+        per_regime_metrics = {}
+        for reg in REGIME_NAMES:
+            if reg in report:
+                supp = int(report[reg].get("support", 0))
+                per_regime_metrics[reg] = {
+                    "precision": round(float(report[reg].get("precision", 0.0)), 3),
+                    "recall": round(float(report[reg].get("recall", 0.0)), 3),
+                    "f1_score": round(float(report[reg].get("f1-score", 0.0)), 3),
+                    "support": supp,
+                    "status": "EVALUATED" if supp > 0 else "ZERO_SUPPORT_RARE_REGIME"
+                }
+            else:
+                per_regime_metrics[reg] = {
+                    "precision": 0.0,
+                    "recall": 0.0,
+                    "f1_score": 0.0,
+                    "support": 0,
+                    "status": "ZERO_SUPPORT_RARE_REGIME"
+                }
+
         feat_imp = []
         if self.feature_importances_ is not None:
             for name, imp in zip(self.feature_names, self.feature_importances_):
@@ -183,7 +204,10 @@ class RegimeClassifier:
             
         return {
             "accuracy": round(acc, 3),
+            "evaluation_type": "RULE_REFERENCE_AGREEMENT",
+            "scientific_disclaimer": "Evaluates ML model fidelity in reproducing meteorological rule definitions. High agreement demonstrates successful distillation of domain physics into ML, not discovery against independent human-annotated ground truth.",
             "report": report,
+            "per_regime_metrics": per_regime_metrics,
             "confusion_matrix": cm.tolist(),
             "feature_importance": feat_imp,
             "best_params": self.best_params_

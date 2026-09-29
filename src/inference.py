@@ -26,6 +26,11 @@ from src.models.regime_model import RegimeSpecificMLPostProcessor
 from src.models.probabilistic import ProbabilisticRainfallPredictor
 from src.models.explainability import explain_district_correction
 from src.data.feature_engineering import engineer_features_dataset, FEATURE_NAMES
+from src.verification.spatial import fractions_skill_score_2d, compute_precipitation_centroid_displacement_km
+from src.geo.district_mapping import INDIAN_DISTRICTS
+from src.geo.grid import aggregate_2d_grid_to_districts
+from src.models.spatial_correction import SpatialRainfallPostProcessor
+
 
 # Global cache for loaded model artifacts to ensure low-latency inference
 _CACHED_MODELS = {
@@ -210,16 +215,23 @@ def run_single_inference(input_record: dict, models_dir: str = "models") -> dict
 
     # 3. Probabilistic Exceedance & Quantiles
     if prob_pred is not None and getattr(prob_pred, "is_trained", False):
-        probs_dict = prob_pred.predict_probabilities(X, predicted_rain=np.array([corrected_rain]))
+        probs_dict = prob_pred.predict_probabilities(X, predicted_rain=np.array([corrected_rain]), mode=mode)
         p_heavy = float(probs_dict["heavy"][0])
         p_very_heavy = float(probs_dict["very_heavy"][0])
         p_extreme = float(probs_dict["extreme"][0])
-        quantiles = prob_pred.predict_quantiles(X, np.array([corrected_rain]))
+        quantiles = prob_pred.predict_quantiles(X, np.array([corrected_rain]), mode=mode)
         p10 = float(quantiles["p10"][0])
         p50 = float(quantiles["p50"][0])
         p90 = float(quantiles["p90"][0])
+    elif mode == "REAL":
+        return {
+            "success": False,
+            "error": "CONFIGURATION_REQUIRED: Trained calibrated probabilistic model not loaded for REAL mode.",
+            "mode": "REAL",
+            "inference_status": "CONFIGURATION_REQUIRED"
+        }
     else:
-        # Standard logistic threshold mapping fallback
+        # Standard logistic threshold mapping fallback (DEMO mode only)
         scale = 14.0
         p_heavy = float(1.0 / (1.0 + np.exp(-(corrected_rain - 64.5) / scale)))
         p_very_heavy = float(1.0 / (1.0 + np.exp(-(corrected_rain - 115.6) / scale)))

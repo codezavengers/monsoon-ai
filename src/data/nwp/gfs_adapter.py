@@ -30,7 +30,8 @@ class GFSAdapter(BaseNWPAdapter):
         self,
         source_path: str,
         lead_time_hours: int = 24,
-        init_time: Optional[datetime.datetime] = None
+        init_time: Optional[datetime.datetime] = None,
+        mode: Optional[str] = None
     ) -> Dict[str, Any]:
         """
         Loads GFS forecast file. Supports:
@@ -41,10 +42,13 @@ class GFSAdapter(BaseNWPAdapter):
         if not os.path.exists(source_path):
             raise FileNotFoundError(f"GFS data file not found at: {source_path}")
 
+        current_mode = mode or os.environ.get("MODE", "DEMO")
+        self.validate_data_mode_path(source_path, mode=current_mode)
+
         ext = os.path.splitext(source_path)[-1].lower()
 
         if ext in [".nc", ".nc4", ".grb2", ".grib2"] and XARRAY_AVAILABLE:
-            return self._load_from_xarray(source_path, lead_time_hours, init_time)
+            return self._load_from_xarray(source_path, lead_time_hours, init_time, mode=current_mode)
         elif ext in [".json"]:
             return self._load_from_json(source_path, lead_time_hours, init_time)
         elif ext in [".csv"]:
@@ -57,7 +61,8 @@ class GFSAdapter(BaseNWPAdapter):
         self,
         filepath: str,
         lead_time_hours: int,
-        init_time: Optional[datetime.datetime]
+        init_time: Optional[datetime.datetime],
+        mode: str = "DEMO"
     ) -> Dict[str, Any]:
         """Reads NetCDF/GRIB2 via xarray, extracts exact lead time, and subsets to Indian domain."""
         ds = xr.open_dataset(filepath)
@@ -100,13 +105,30 @@ class GFSAdapter(BaseNWPAdapter):
                     except (ValueError, TypeError):
                         hours_list.append(0.0)
 
-            # Match exact or nearest lead time
             hours_arr = np.array(hours_list)
             diffs = np.abs(hours_arr - lead_time_hours)
+            min_diff = float(np.min(diffs))
+
+            if min_diff > 0.5 and mode.upper() == "REAL":
+                raise NWPValidationError(
+                    f"LEAD_TIME_NOT_AVAILABLE: Requested lead +{lead_time_hours}h is not present in "
+                    f"GFS forecast '{filepath}'. Available leads: {[int(h) for h in hours_arr]}. "
+                    f"Silent nearest-lead selection is strictly prohibited in REAL mode."
+                )
+
             step_idx = int(np.argmin(diffs))
             actual_lead_h = int(hours_arr[step_idx])
         elif lead_coord and ds[lead_coord].size == 1:
             step_idx = 0
+            # If lead coord has 1 value, check whether it matches requested lead
+            single_val = ds[lead_coord].values[0]
+            val_h = float(single_val / np.timedelta64(1, "h")) if isinstance(single_val, np.timedelta64) else float(single_val)
+            if abs(val_h - lead_time_hours) > 0.5 and mode.upper() == "REAL":
+                raise NWPValidationError(
+                    f"LEAD_TIME_NOT_AVAILABLE: Requested lead +{lead_time_hours}h does not match single step "
+                    f"+{val_h}h in '{filepath}'."
+                )
+            actual_lead_h = int(val_h)
 
         # GFS variable translation mapping
         var_mapping = {

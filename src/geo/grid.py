@@ -58,12 +58,19 @@ def aggregate_2d_grid_to_districts(
     lats: np.ndarray,
     lons: np.ndarray,
     districts: List[Dict[str, Any]],
-    radius_km: float = 65.0
-) -> Dict[str, Dict[str, float]]:
+    radius_km: float = 65.0,
+    mode: str = "DEMO"
+) -> Dict[str, Dict[str, Any]]:
     """
     Aggregates genuine 2-D gridded field to district summary statistics.
-    Returns dict: district_name -> {mean, max, p90, min}
+    In REAL mode: utilizes area-weighted polygon-cell intersection.
+    In DEMO mode: utilizes representative district radius aggregation.
+    Returns dict: district_name -> {mean, max, p90, min, aggregation_method}
     """
+    if str(mode).upper() == "REAL":
+        from src.geo.district_polygons import aggregate_2d_grid_area_weighted
+        return aggregate_2d_grid_area_weighted(grid_2d, lats, lons)
+
     ny, nx = len(lats), len(lons)
     mesh_lats, mesh_lons = np.meshgrid(lats, lons, indexing="ij")
     results = {}
@@ -96,7 +103,8 @@ def aggregate_2d_grid_to_districts(
             "mean": round(float(np.mean(arr)), 1),
             "max": round(float(np.max(arr)), 1),
             "p90": round(float(np.percentile(arr, 90)), 1),
-            "min": round(float(np.min(arr)), 1)
+            "min": round(float(np.min(arr)), 1),
+            "aggregation_method": "REPRESENTATIVE_POINT_RADIUS"
         }
 
     return results

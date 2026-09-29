@@ -85,7 +85,13 @@ def discover_latest_cycle(
     
     # Try parsing cycle date and hour from filename e.g. gfs_20240715_00z.nc
     cycle_tag = "00Z"
+    parsed_cycle_date = None
     for part in latest_fname.replace("-", "_").split("_"):
+        if len(part) == 8 and part.isdigit():
+            try:
+                parsed_cycle_date = datetime.date(int(part[:4]), int(part[4:6]), int(part[6:8]))
+            except ValueError:
+                pass
         if len(part) == 3 and part[:2].isdigit() and part[2].lower() == "z":
             cycle_tag = part.upper()
             
@@ -97,6 +103,7 @@ def discover_latest_cycle(
         "latest_file": latest_fname,
         "file_path": latest_fpath,
         "latest_cycle": cycle_dt.isoformat(),
+        "cycle_date": parsed_cycle_date.isoformat() if parsed_cycle_date else cycle_dt.date().isoformat(),
         "cycle_hour": cycle_tag,
         "file_size_bytes": latest_size,
         "age_hours": round(age_hours, 2),
@@ -104,6 +111,155 @@ def discover_latest_cycle(
         "is_stale": is_stale,
         "available_candidates_count": len(candidates)
     }
+
+def build_provider_cycle_url(
+    provider: str,
+    cycle_date: datetime.date,
+    cycle_hour: str = "00Z",
+    lead_time_hours: int = 24,
+    config: Optional[Dict[str, Any]] = None
+) -> str:
+    """
+    Constructs provider-specific operational acquisition URL for real NWP forecast files.
+    - GFS: NOAA NOMADS or AWS Open Data (publicly accessible)
+    - ECMWF: Requires explicit ECMWF_API_URL / credentials in config
+    - NCMRWF: Requires explicit NCMRWF_DATA_URL in config
+    """
+    prov = provider.strip().upper()
+    hour_clean = cycle_hour.strip().upper().replace("Z", "")
+    lead_3d = f"{lead_time_hours:03d}"
+    date_str = cycle_date.strftime("%Y%m%d")
+
+    cfg = config or {}
+
+    if "GFS" in prov:
+        # NOAA NOMADS operational distribution
+        base_url = cfg.get("gfs_base_url", "https://nomads.ncep.noaa.gov/pub/data/nccf/com/gfs/prod")
+        return f"{base_url}/gfs.{date_str}/{hour_clean:0>2}/atmos/gfs.t{hour_clean:0>2}z.pgrb2.0p25.f{lead_3d}"
+
+    elif "ECMWF" in prov:
+        base_url = cfg.get("ecmwf_base_url")
+        if not base_url:
+            raise NWPValidationError(
+                "ECMWF_CONFIGURATION_REQUIRED: Authentic ECMWF HRES data acquisition requires an explicit 'ecmwf_base_url' "
+                "or ECMWF API client configured in config.yaml. Mock credentials or silent substitution are prohibited in REAL mode."
+            )
+        return f"{base_url}/{date_str}/{hour_clean:0>2}z/{lead_time_hours}h.nc"
+
+    elif "NCMRWF" in prov:
+        base_url = cfg.get("ncmrwf_base_url")
+        if not base_url:
+            raise NWPValidationError(
+                "NCMRWF_CONFIGURATION_REQUIRED: Authentic NCMRWF NCUM data acquisition requires an explicit 'ncmrwf_base_url' "
+                "in config.yaml. Mock credentials or silent substitution are prohibited in REAL mode."
+            )
+        return f"{base_url}/{date_str}_{hour_clean:0>2}z_lead_{lead_time_hours}h.nc"
+
+    else:
+        raise NWPValidationError(f"UNSUPPORTED_NWP_PROVIDER: Provider '{provider}' is not supported.")
+
+def extract_cycle_metadata(filepath: str, provider: str = "GFS") -> Dict[str, Any]:
+    """
+    Extracts complete meteorological and temporal metadata from ingested NWP file.
+    Does not assume or default dates/leads arbitrarily.
+    """
+    if not os.path.exists(filepath):
+        raise FileNotFoundError(f"File not found for metadata extraction: {filepath}")
+
+    stat = os.stat(filepath)
+    ext = os.path.splitext(filepath)[-1].lower()
+    meta = {
+        "file_name": os.path.basename(filepath),
+        "file_path": filepath,
+        "file_size_bytes": stat.st_size,
+        "sha256": compute_sha256(filepath),
+        "provider": provider.upper(),
+        "extracted_at": datetime.datetime.now(datetime.timezone.utc).isoformat()
+    }
+
+    if ext in [".nc", ".nc4"]:
+        try:
+            import xarray as xr
+            with xr.open_dataset(filepath) as ds:
+                meta["variables"] = list(ds.data_vars.keys())
+                meta["coordinates"] = list(ds.coords.keys())
+                if any(c in ds.coords for c in ["lat", "latitude"]):
+                    lat_k = next(c for c in ["lat", "latitude"] if c in ds.coords)
+                    meta["lat_min"] = float(ds[lat_k].min())
+                    meta["lat_max"] = float(ds[lat_k].max())
+                if any(c in ds.coords for c in ["lon", "longitude"]):
+                    lon_k = next(c for c in ["lon", "longitude"] if c in ds.coords)
+                    meta["lon_min"] = float(ds[lon_k].min())
+                    meta["lon_max"] = float(ds[lon_k].max())
+                if "step" in ds.coords:
+                    meta["lead_times"] = [int(s) for s in ds["step"].values]
+        except Exception as e:
+            meta["read_warning"] = str(e)
+
+    return meta
+
+def run_operational_ingestion(
+    provider: str,
+    cycle_date: datetime.date,
+    cycle_hour: str = "00Z",
+    lead_time_hours: int = 24,
+    target_dir: str = "data/raw/nwp",
+    archive_root: str = "results/archive",
+    config: Optional[Dict[str, Any]] = None
+) -> Dict[str, Any]:
+    """
+    End-to-end Operational NWP Ingestion Pipeline:
+    1. Provider URL construction
+    2. Secure download with retries and timeout
+    3. SHA-256 Checksum calculation
+    4. Format and coordinate validation
+    5. Meteorological metadata extraction
+    6. Structured archiving
+    7. Dataset manifest generation
+    """
+    logger.info(f"Starting operational ingestion: Provider={provider}, Date={cycle_date}, Cycle={cycle_hour}, Lead=+{lead_time_hours}h")
+
+    # 1. Construct URL
+    url = build_provider_cycle_url(provider, cycle_date, cycle_hour, lead_time_hours, config=config)
+
+    # 2. Target filename
+    date_str = cycle_date.strftime("%Y%m%d")
+    hour_str = cycle_hour.lower()
+    target_filename = f"{provider.lower()}_{date_str}_{hour_str}_{lead_time_hours}h.nc"
+    target_path = os.path.join(target_dir, target_filename)
+
+    # 3. Download cycle
+    dl_result = download_cycle(url, target_path, max_retries=3, timeout_sec=45)
+    if not dl_result.get("success"):
+        return {
+            "success": False,
+            "status": "DATA_UNAVAILABLE",
+            "error": f"Failed to acquire authentic NWP data from {url}: {dl_result.get('error')}",
+            "provider": provider,
+            "cycle_date": cycle_date.isoformat(),
+            "cycle_hour": cycle_hour,
+            "lead_time_hours": lead_time_hours
+        }
+
+    # 4. Extract metadata
+    metadata = extract_cycle_metadata(target_path, provider)
+
+    # 5. Archive cycle
+    cycle_dt = datetime.datetime(cycle_date.year, cycle_date.month, cycle_date.day, int(cycle_hour.replace("Z", "") or 0))
+    archived_path = archive_cycle(target_path, provider, cycle_dt, lead_time_hours, archive_root=archive_root)
+
+    # 6. Manifest
+    manifest = return_dataset_manifest([target_path], [], provider=provider, cycle=cycle_hour, mode="REAL")
+
+    return {
+        "success": True,
+        "status": "INGESTED",
+        "file_path": target_path,
+        "archived_path": archived_path,
+        "metadata": metadata,
+        "manifest": manifest
+    }
+
 
 def validate_file(filepath: str, provider: str = "GFS") -> Tuple[bool, List[str]]:
     """
