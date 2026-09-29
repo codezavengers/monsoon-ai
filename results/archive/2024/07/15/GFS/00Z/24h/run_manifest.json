@@ -1,312 +1,269 @@
 {
-  "run_id": "GFS_20240715_00Z_24h_1790686484",
+  "run_id": "GFS_20240715_00Z_24h_1790707873",
   "mode": "DEMO",
   "data_source": "Synthetic GFS Benchmark (JJAS Simulation)",
   "provider": "GFS",
   "cycle": "00Z",
-  "valid_time": "2024-07-16T00:00:00Z",
+  "init_time": "2024-07-15T00:00:00Z",
+  "valid_time": "2024-07-15T24:00:00Z",
   "lead_time": 24,
   "model_version": "2.1.0-regime-aware",
   "fallback_used": false,
   "inference_status": "SUCCESS",
-  "regime": "normal_monsoon",
-  "regime_probabilities": {
-    "normal_monsoon": 0.998,
-    "active_monsoon": 0.0,
-    "break_monsoon": 0.0,
-    "monsoon_depression": 0.0,
-    "coastal_rainfall": 0.002,
-    "orographic_rainfall": 0.0,
-    "western_disturbance": 0.0,
-    "extreme_event": 0.0
-  },
-  "cycle_metadata": {
-    "date": "2024-07-15",
-    "cycle": "00Z",
-    "lead_time_hours": 24,
-    "provider": "GFS",
-    "mode": "DEMO",
-    "execution_time": "2026-09-29T12:54:44.504123+00:00",
-    "freshness": {
-      "status": "FRESH",
-      "age_hours": 0.0,
-      "stale_threshold_hours": 24.0,
-      "is_stale": false
-    },
-    "audit": {
-      "passed": true,
-      "issues": [],
-      "missing_variables": [],
-      "audit_timestamp": "2026-09-29T12:54:44.117183"
-    },
-    "data_source": "Synthetic GFS Benchmark (JJAS Simulation)",
-    "fallback_used": false,
-    "inference_status": "SUCCESS",
-    "spatial_diagnostics": {
-      "max_raw_rain": 90.9,
-      "max_corrected_rain": 91.0,
-      "mean_delta_mm": 2.9883847549909257,
-      "displacement_predicted_lat_deg": 0.0,
-      "displacement_predicted_lon_deg": 0.0,
-      "displacement_applied": [
-        0.0,
-        0.0
-      ],
-      "has_scipy": true,
-      "observation_leakage_prevented": true
-    }
-  },
+  "regime": "active_monsoon",
   "spatial_verification_fss": {
-    "1": 0.58,
-    "3": 0.741,
-    "5": 0.766,
-    "7": 0.772
+    "1": 0.91,
+    "3": 0.917,
+    "5": 0.932,
+    "7": 0.946
   },
+  "precipitation_centroid_displacement_km": 4.3,
   "district_aggregates": {
     "Mumbai City": {
-      "mean": 29.1,
-      "max": 44.4,
-      "p90": 38.4,
-      "min": 13.7,
+      "mean": 16.8,
+      "max": 35.4,
+      "p90": 27.4,
+      "min": 6.6,
       "aggregation_method": "REPRESENTATIVE_POINT_RADIUS"
     },
     "Ratnagiri": {
-      "mean": 52.6,
-      "max": 73.5,
-      "p90": 69.9,
-      "min": 23.1,
-      "aggregation_method": "REPRESENTATIVE_POINT_RADIUS"
-    },
-    "Pune": {
-      "mean": 48.1,
-      "max": 55.2,
-      "p90": 52.9,
-      "min": 43.7,
-      "aggregation_method": "REPRESENTATIVE_POINT_RADIUS"
-    },
-    "Wayanad": {
-      "mean": 16.3,
-      "max": 27.9,
-      "p90": 24.3,
-      "min": 8.7,
-      "aggregation_method": "REPRESENTATIVE_POINT_RADIUS"
-    },
-    "Kozhikode": {
-      "mean": 20.6,
-      "max": 27.9,
-      "p90": 25.4,
-      "min": 16.2,
-      "aggregation_method": "REPRESENTATIVE_POINT_RADIUS"
-    },
-    "Udupi": {
-      "mean": 45.1,
-      "max": 57.7,
-      "p90": 55.9,
-      "min": 33.7,
-      "aggregation_method": "REPRESENTATIVE_POINT_RADIUS"
-    },
-    "Uttara Kannada": {
-      "mean": 69.5,
-      "max": 91.0,
-      "p90": 87.0,
-      "min": 31.9,
-      "aggregation_method": "REPRESENTATIVE_POINT_RADIUS"
-    },
-    "Nagpur": {
-      "mean": 50.8,
-      "max": 61.4,
-      "p90": 58.4,
-      "min": 42.4,
-      "aggregation_method": "REPRESENTATIVE_POINT_RADIUS"
-    },
-    "Raipur": {
-      "mean": 67.7,
-      "max": 88.2,
-      "p90": 77.2,
-      "min": 61.3,
-      "aggregation_method": "REPRESENTATIVE_POINT_RADIUS"
-    },
-    "Jabalpur": {
-      "mean": 60.7,
-      "max": 65.4,
-      "p90": 64.5,
-      "min": 57.1,
-      "aggregation_method": "REPRESENTATIVE_POINT_RADIUS"
-    },
-    "Bhopal": {
-      "mean": 47.1,
-      "max": 51.5,
-      "p90": 51.2,
-      "min": 42.7,
-      "aggregation_method": "REPRESENTATIVE_POINT_RADIUS"
-    },
-    "Sambalpur": {
-      "mean": 53.9,
-      "max": 59.8,
-      "p90": 57.5,
-      "min": 49.8,
-      "aggregation_method": "REPRESENTATIVE_POINT_RADIUS"
-    },
-    "Cuttack": {
-      "mean": 44.7,
-      "max": 50.0,
-      "p90": 49.8,
-      "min": 37.4,
-      "aggregation_method": "REPRESENTATIVE_POINT_RADIUS"
-    },
-    "Balasore": {
-      "mean": 43.6,
-      "max": 50.2,
-      "p90": 48.2,
-      "min": 37.8,
-      "aggregation_method": "REPRESENTATIVE_POINT_RADIUS"
-    },
-    "Ranchi": {
-      "mean": 58.1,
-      "max": 73.4,
-      "p90": 67.1,
-      "min": 46.6,
-      "aggregation_method": "REPRESENTATIVE_POINT_RADIUS"
-    },
-    "East Khasi Hills": {
-      "mean": 13.4,
-      "max": 17.9,
-      "p90": 15.9,
-      "min": 7.5,
-      "aggregation_method": "REPRESENTATIVE_POINT_RADIUS"
-    },
-    "Kamrup": {
-      "mean": 11.0,
-      "max": 14.6,
-      "p90": 13.8,
-      "min": 7.5,
-      "aggregation_method": "REPRESENTATIVE_POINT_RADIUS"
-    },
-    "Dibrugarh": {
-      "mean": 13.0,
-      "max": 17.7,
-      "p90": 17.1,
+      "mean": 23.4,
+      "max": 46.8,
+      "p90": 34.5,
       "min": 6.7,
       "aggregation_method": "REPRESENTATIVE_POINT_RADIUS"
     },
+    "Pune": {
+      "mean": 22.8,
+      "max": 41.6,
+      "p90": 41.2,
+      "min": 9.7,
+      "aggregation_method": "REPRESENTATIVE_POINT_RADIUS"
+    },
+    "Wayanad": {
+      "mean": 23.7,
+      "max": 41.9,
+      "p90": 40.7,
+      "min": 8.5,
+      "aggregation_method": "REPRESENTATIVE_POINT_RADIUS"
+    },
+    "Kozhikode": {
+      "mean": 16.0,
+      "max": 23.8,
+      "p90": 22.8,
+      "min": 5.1,
+      "aggregation_method": "REPRESENTATIVE_POINT_RADIUS"
+    },
+    "Udupi": {
+      "mean": 22.1,
+      "max": 45.5,
+      "p90": 38.5,
+      "min": 6.1,
+      "aggregation_method": "REPRESENTATIVE_POINT_RADIUS"
+    },
+    "Uttara Kannada": {
+      "mean": 17.6,
+      "max": 42.3,
+      "p90": 32.6,
+      "min": 5.1,
+      "aggregation_method": "REPRESENTATIVE_POINT_RADIUS"
+    },
+    "Nagpur": {
+      "mean": 23.0,
+      "max": 47.3,
+      "p90": 37.4,
+      "min": 5.7,
+      "aggregation_method": "REPRESENTATIVE_POINT_RADIUS"
+    },
+    "Raipur": {
+      "mean": 16.7,
+      "max": 37.3,
+      "p90": 32.1,
+      "min": 4.7,
+      "aggregation_method": "REPRESENTATIVE_POINT_RADIUS"
+    },
+    "Jabalpur": {
+      "mean": 35.6,
+      "max": 58.7,
+      "p90": 58.0,
+      "min": 16.3,
+      "aggregation_method": "REPRESENTATIVE_POINT_RADIUS"
+    },
+    "Bhopal": {
+      "mean": 26.2,
+      "max": 46.8,
+      "p90": 46.1,
+      "min": 4.0,
+      "aggregation_method": "REPRESENTATIVE_POINT_RADIUS"
+    },
+    "Sambalpur": {
+      "mean": 33.4,
+      "max": 116.6,
+      "p90": 59.5,
+      "min": 8.6,
+      "aggregation_method": "REPRESENTATIVE_POINT_RADIUS"
+    },
+    "Cuttack": {
+      "mean": 15.5,
+      "max": 25.1,
+      "p90": 25.0,
+      "min": 6.7,
+      "aggregation_method": "REPRESENTATIVE_POINT_RADIUS"
+    },
+    "Balasore": {
+      "mean": 29.1,
+      "max": 68.6,
+      "p90": 46.8,
+      "min": 3.4,
+      "aggregation_method": "REPRESENTATIVE_POINT_RADIUS"
+    },
+    "Ranchi": {
+      "mean": 18.1,
+      "max": 37.1,
+      "p90": 28.6,
+      "min": 3.5,
+      "aggregation_method": "REPRESENTATIVE_POINT_RADIUS"
+    },
+    "East Khasi Hills": {
+      "mean": 25.9,
+      "max": 47.5,
+      "p90": 45.4,
+      "min": 5.1,
+      "aggregation_method": "REPRESENTATIVE_POINT_RADIUS"
+    },
+    "Kamrup": {
+      "mean": 26.2,
+      "max": 52.4,
+      "p90": 41.5,
+      "min": 6.1,
+      "aggregation_method": "REPRESENTATIVE_POINT_RADIUS"
+    },
+    "Dibrugarh": {
+      "mean": 23.6,
+      "max": 41.3,
+      "p90": 37.4,
+      "min": 3.1,
+      "aggregation_method": "REPRESENTATIVE_POINT_RADIUS"
+    },
     "Kolkata": {
-      "mean": 37.7,
-      "max": 49.0,
-      "p90": 43.0,
-      "min": 34.6,
+      "mean": 26.5,
+      "max": 75.4,
+      "p90": 48.8,
+      "min": 5.7,
       "aggregation_method": "REPRESENTATIVE_POINT_RADIUS"
     },
     "Darjeeling": {
-      "mean": 22.6,
-      "max": 31.1,
-      "p90": 29.2,
-      "min": 17.9,
+      "mean": 25.8,
+      "max": 71.7,
+      "p90": 54.7,
+      "min": 5.9,
       "aggregation_method": "REPRESENTATIVE_POINT_RADIUS"
     },
     "Dehradun": {
-      "mean": 19.4,
-      "max": 36.4,
-      "p90": 28.9,
-      "min": 8.1,
+      "mean": 16.2,
+      "max": 32.8,
+      "p90": 30.6,
+      "min": 3.6,
       "aggregation_method": "REPRESENTATIVE_POINT_RADIUS"
     },
     "Shimla": {
-      "mean": 18.2,
-      "max": 25.7,
-      "p90": 22.5,
-      "min": 12.6,
+      "mean": 12.3,
+      "max": 17.5,
+      "p90": 17.3,
+      "min": 3.5,
       "aggregation_method": "REPRESENTATIVE_POINT_RADIUS"
     },
     "New Delhi": {
-      "mean": 18.9,
-      "max": 26.0,
-      "p90": 25.6,
-      "min": 13.0,
+      "mean": 14.3,
+      "max": 40.2,
+      "p90": 25.4,
+      "min": 3.3,
       "aggregation_method": "REPRESENTATIVE_POINT_RADIUS"
     },
     "Lucknow": {
-      "mean": 21.6,
-      "max": 26.1,
-      "p90": 24.7,
-      "min": 17.7,
+      "mean": 13.7,
+      "max": 42.2,
+      "p90": 30.6,
+      "min": 4.3,
       "aggregation_method": "REPRESENTATIVE_POINT_RADIUS"
     },
     "Varanasi": {
-      "mean": 43.4,
-      "max": 55.2,
-      "p90": 51.4,
-      "min": 36.6,
+      "mean": 14.5,
+      "max": 36.4,
+      "p90": 25.0,
+      "min": 2.8,
       "aggregation_method": "REPRESENTATIVE_POINT_RADIUS"
     },
     "Patna": {
-      "mean": 35.1,
-      "max": 45.9,
-      "p90": 45.2,
-      "min": 27.3,
+      "mean": 23.0,
+      "max": 48.6,
+      "p90": 38.1,
+      "min": 4.7,
       "aggregation_method": "REPRESENTATIVE_POINT_RADIUS"
     },
     "Ahmedabad": {
-      "mean": 24.6,
-      "max": 35.0,
-      "p90": 31.4,
-      "min": 16.6,
+      "mean": 28.1,
+      "max": 82.0,
+      "p90": 74.4,
+      "min": 3.6,
       "aggregation_method": "REPRESENTATIVE_POINT_RADIUS"
     },
     "Surat": {
-      "mean": 26.9,
-      "max": 36.4,
-      "p90": 32.2,
-      "min": 21.7,
+      "mean": 18.2,
+      "max": 35.9,
+      "p90": 24.8,
+      "min": 7.2,
       "aggregation_method": "REPRESENTATIVE_POINT_RADIUS"
     },
     "Jaipur": {
-      "mean": 17.9,
-      "max": 24.6,
-      "p90": 23.6,
-      "min": 12.2,
+      "mean": 20.8,
+      "max": 44.4,
+      "p90": 31.2,
+      "min": 2.6,
       "aggregation_method": "REPRESENTATIVE_POINT_RADIUS"
     },
     "Jodhpur": {
-      "mean": 20.5,
-      "max": 28.7,
-      "p90": 27.0,
-      "min": 13.2,
+      "mean": 19.4,
+      "max": 66.8,
+      "p90": 34.7,
+      "min": 6.3,
       "aggregation_method": "REPRESENTATIVE_POINT_RADIUS"
     },
     "Bengaluru Urban": {
-      "mean": 15.7,
-      "max": 24.3,
-      "p90": 22.7,
-      "min": 8.7,
+      "mean": 33.9,
+      "max": 84.5,
+      "p90": 68.6,
+      "min": 7.2,
       "aggregation_method": "REPRESENTATIVE_POINT_RADIUS"
     },
     "Hyderabad": {
-      "mean": 21.5,
-      "max": 29.6,
-      "p90": 28.6,
-      "min": 13.4,
+      "mean": 20.3,
+      "max": 47.5,
+      "p90": 33.3,
+      "min": 3.3,
       "aggregation_method": "REPRESENTATIVE_POINT_RADIUS"
     },
     "Visakhapatnam": {
-      "mean": 21.2,
-      "max": 28.6,
-      "p90": 25.8,
-      "min": 18.4,
+      "mean": 21.7,
+      "max": 41.9,
+      "p90": 35.3,
+      "min": 3.9,
       "aggregation_method": "REPRESENTATIVE_POINT_RADIUS"
     },
     "Chennai": {
-      "mean": 13.7,
-      "max": 23.3,
-      "p90": 19.3,
-      "min": 9.6,
+      "mean": 21.8,
+      "max": 44.5,
+      "p90": 36.2,
+      "min": 12.7,
       "aggregation_method": "REPRESENTATIVE_POINT_RADIUS"
     },
     "Coimbatore": {
-      "mean": 11.9,
-      "max": 16.4,
-      "p90": 15.1,
-      "min": 7.5,
+      "mean": 21.3,
+      "max": 57.8,
+      "p90": 34.2,
+      "min": 6.9,
       "aggregation_method": "REPRESENTATIVE_POINT_RADIUS"
     }
-  }
+  },
+  "executed_at": "2026-09-29T18:51:13.225696+00:00"
 }

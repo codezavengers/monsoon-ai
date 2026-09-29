@@ -2,7 +2,7 @@
   "RegimeAwareRainfallAI_v1.0.0_24h": {
     "model_name": "RegimeAwareRainfallAI",
     "version": "1.0.0",
-    "training_timestamp": "2026-09-29T12:57:15.055702+00:00",
+    "training_timestamp": "2026-09-29T18:48:21.710775+00:00",
     "mode": "DEMO",
     "environment": {
       "python_version": "3.11.2",
@@ -11,12 +11,9 @@
         "numpy": "1.24.2",
         "scipy": "1.10.1",
         "pandas": "1.5.3",
-        "sklearn": "1.2.1",
-        "xarray": "999",
-        "netCDF4": "1.6.2"
+        "sklearn": "1.2.1"
       },
-      "feature_schema_version": "2.1.0",
-      "git_commit": "uncommitted_workspace"
+      "feature_schema_version": "2.1.0"
     },
     "dataset_provenance": {
       "dataset_version": "2.1.0",
@@ -68,7 +65,7 @@
     },
     "metrics": {
       "test_accuracy": 0.99,
-      "fss_5x5": 0.156
+      "fss_5x5": 0.936
     },
     "calibration": {
       "method": "sigmoid_platt",
@@ -76,10 +73,10 @@
     },
     "random_seed": 42,
     "artifact_hashes": {
-      "regime_classifier.pkl": "66e5d46fcb0ac9c534dfe4c04bc9a6c7d4a546bf777016f7d4d9858d865f311c",
-      "regime_ml_model.pkl": "0c10dcdf000513c2eee39858e08a2f9e29bba694506f4196f56c86f868577039",
-      "prob_predictor.pkl": "527bbf42066d70bc66a7bd974697a8f4bde34bb451af07cc5dafdf5382ac5433",
-      "predictive_displacement.pkl": "978b11421d64ca1ed708a11d1596504b059c36fbf7e9661d767f22300da6a8f5"
+      "regime_classifier.pkl": "6174b2d91acd0827429c809342ba5c00ad14d4f07a9cb08033766387593fd745",
+      "regime_ml_model.pkl": "42dd2d15def76bf50748bc76c606367a0ee674a434021d12e10f7d32fec2a165",
+      "prob_predictor.pkl": "4185109352eb685aefaf8c25b994b2fbfd92ba8584ad0c902d784c21cdc6e9d8",
+      "predictive_displacement.pkl": "ed0700600ed151c60ec406ab5501062650454a751d5ef528305adbfdad98ecfb"
     }
   },
   "TestRegimeModel_v1.0.0-test_24h": {
@@ -136,10 +133,10 @@
     },
     "random_seed": 42,
     "artifact_hashes": {
-      "regime_classifier.pkl": "66e5d46fcb0ac9c534dfe4c04bc9a6c7d4a546bf777016f7d4d9858d865f311c",
-      "regime_ml_model.pkl": "0c10dcdf000513c2eee39858e08a2f9e29bba694506f4196f56c86f868577039",
-      "prob_predictor.pkl": "527bbf42066d70bc66a7bd974697a8f4bde34bb451af07cc5dafdf5382ac5433",
-      "predictive_displacement.pkl": "978b11421d64ca1ed708a11d1596504b059c36fbf7e9661d767f22300da6a8f5"
+      "regime_classifier.pkl": "6174b2d91acd0827429c809342ba5c00ad14d4f07a9cb08033766387593fd745",
+      "regime_ml_model.pkl": "42dd2d15def76bf50748bc76c606367a0ee674a434021d12e10f7d32fec2a165",
+      "prob_predictor.pkl": "4185109352eb685aefaf8c25b994b2fbfd92ba8584ad0c902d784c21cdc6e9d8",
+      "predictive_displacement.pkl": "ed0700600ed151c60ec406ab5501062650454a751d5ef528305adbfdad98ecfb"
     }
   }
 }

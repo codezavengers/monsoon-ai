@@ -1,0 +1,14 @@
+[
+  "tests/test_rainfall_ai.py::test_exact_temporal_matching",
+  "tests/test_rainfall_ai.py::test_feature_engineering_schema",
+  "tests/test_rainfall_ai.py::test_fss_spatial_verification",
+  "tests/test_rainfall_ai.py::test_lead_validation",
+  "tests/test_rainfall_ai.py::test_leakage_prevention",
+  "tests/test_rainfall_ai.py::test_no_real_synthetic_fallback",
+  "tests/test_rainfall_ai.py::test_operational_monitoring_psi",
+  "tests/test_rainfall_ai.py::test_operational_pipeline_runner",
+  "tests/test_rainfall_ai.py::test_polygon_aggregation",
+  "tests/test_rainfall_ai.py::test_predictive_displacement",
+  "tests/test_rainfall_ai.py::test_probabilistic_calibration",
+  "tests/test_rainfall_ai.py::test_regime_classification_rules"
+]

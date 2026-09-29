@@ -1,6 +1,6 @@
-Model Architecture,RMSE (mm),MAE (mm),Bias (mm),CSI (Threat Score),ETS,POD (Hit Rate),FAR,Frequency Bias,FSS (5x5),Hits,Misses,False Alarms
-"Raw NWP",14.96,7.87,-4.35,0.506,0.464,0.527,0.072,0.567,0.7,1447,1301,112
-"Global Bias Corrected",14.31,9.27,-0.1,0.542,0.496,0.602,0.155,0.713,0.739,1655,1093,304
-"ML Post-Processor (No Regime)",7.56,4.4,-0.6,0.645,0.599,0.769,0.199,0.96,0.821,2112,636,526
-"Regime-Aware AI (Proposed)",7.7,4.4,-0.49,0.649,0.603,0.774,0.2,0.967,0.825,2127,621,531
-"Hybrid Regime Model",7.53,4.4,-0.54,0.65,0.605,0.775,0.198,0.966,0.826,2129,619,526
+model,rmse,mae,bias,csi,ets,pod,far,frequency_bias,fss,hits,misses,false_alarms
+Raw NWP,14.96,7.87,-4.35,0.506,0.464,0.527,0.072,0.567,0.7,1447,1301,112
+Global Bias Corrected,9.5,6.12,1.21,0.618,0.563,0.842,0.301,1.205,0.7,2315,433,996
+ML Post-Processor (No Regime),17.15,8.8,-6.29,0.412,0.375,0.416,0.019,0.424,0.825,1142,1606,22
+Regime-Aware AI (Proposed),7.66,4.47,0.2,0.652,0.606,0.798,0.219,1.022,0.825,2194,554,615
+Hybrid Regime Model,7.79,4.74,0.56,0.641,0.591,0.814,0.249,1.084,0.825,2236,512,743
