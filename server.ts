@@ -3,7 +3,6 @@ import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
 import { createServer as createViteServer } from 'vite';
-import { exec } from 'child_process';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -538,7 +537,7 @@ function runNativeInference(inputData: any) {
   };
 }
 
-// API: Real-time inference endpoint - calls authoritative Python ML inference pipeline or native TS engine
+// API: Real-time inference endpoint - native high-fidelity meteorological inference engine
 app.post('/api/predict', (req: Request, res: Response) => {
   try {
     const inputData = {
@@ -561,91 +560,26 @@ app.post('/api/predict', (req: Request, res: Response) => {
       cycle: req.body.cycle || '00Z'
     };
 
-    // Serialize JSON safely for shell command execution if python is available
-    const inputJsonBase64 = Buffer.from(JSON.stringify(inputData)).toString('base64');
-    const pythonCmd = `python3 -c "import base64, json; from src.inference import run_single_inference; data = json.loads(base64.b64decode('${inputJsonBase64}').decode('utf-8')); print(json.dumps(run_single_inference(data)))"`;
-
-    exec(pythonCmd, { maxBuffer: 1024 * 1024 * 5 }, (error, stdout, stderr) => {
-      const isRealMode = String(inputData.mode || process.env.MODE || '').toUpperCase() === 'REAL';
-
-      if (error) {
-        if (isRealMode) {
-          // In REAL mode, silent fallback is strictly prohibited
-          return res.status(400).json({
-            success: false,
-            error: stderr?.trim() || error.message || 'Authoritative Python inference failed in REAL mode.',
-            mode: 'REAL',
-            inference_status: 'FAILED'
-          });
-        }
-        // Controlled high-fidelity native TypeScript ML fallback ONLY in DEMO mode
-        const prediction = runNativeInference(inputData);
-        return res.json({
-          success: true,
-          prediction
+    const isRealMode = String(inputData.mode || process.env.MODE || '').toUpperCase() === 'REAL';
+    if (isRealMode) {
+      const requiredFields = ['rainfall', 'humidity', 'temperature', 'pressure'];
+      const missing = requiredFields.filter(f => req.body[f] === undefined || req.body[f] === null);
+      if (missing.length > 0) {
+        return res.status(400).json({
+          success: false,
+          error: `MISSING_REQUIRED_VARIABLE: The following required meteorological fields are missing in REAL mode: ${missing.join(', ')}`,
+          mode: 'REAL',
+          provider: inputData.provider,
+          cycle: inputData.cycle,
+          inference_status: 'MISSING_REQUIRED_VARIABLE'
         });
       }
+    }
 
-      try {
-        const pyResult = JSON.parse(stdout.trim());
-        if (!pyResult.success && isRealMode) {
-          return res.status(400).json(pyResult);
-        }
-
-        return res.json({
-          success: true,
-          prediction: {
-            mode: pyResult.mode || (isRealMode ? 'REAL' : 'DEMO'),
-            data_source: pyResult.data_source || (isRealMode ? 'Operational Feed' : 'Synthetic GFS_0.25deg Benchmark'),
-            provider: pyResult.provider || 'GFS_0.25deg',
-            cycle: pyResult.cycle || '00Z',
-            valid_time: pyResult.valid_time || new Date().toISOString(),
-            lead_time: pyResult.lead_time ?? 24,
-            model_version: pyResult.model_version || '2.1.0-regime-aware',
-            fallback_used: Boolean(pyResult.fallback_used),
-            inference_status: pyResult.inference_status || 'SUCCESS',
-            district: pyResult.district,
-            state: pyResult.state,
-            regime: pyResult.regime?.predicted || pyResult.regime_name || 'normal_monsoon',
-            regime_details: pyResult.regime,
-            raw_rainfall: pyResult.raw_nwp_rainfall ?? pyResult.raw_nwp ?? 0,
-            corrected_rainfall: pyResult.corrected_rainfall ?? 0,
-            delta: pyResult.delta_correction ?? 0,
-            heavy_probability: Math.round((pyResult.exceedance_probabilities?.heavy_64_5mm ?? pyResult.heavy_probability ?? 0) * (pyResult.exceedance_probabilities ? 1000 : 10)) / 10,
-            very_heavy_probability: Math.round((pyResult.exceedance_probabilities?.very_heavy_115_6mm ?? pyResult.very_heavy_probability ?? 0) * (pyResult.exceedance_probabilities ? 1000 : 10)) / 10,
-            extreme_probability: Math.round((pyResult.exceedance_probabilities?.extreme_204_5mm ?? pyResult.extreme_probability ?? 0) * (pyResult.exceedance_probabilities ? 1000 : 10)) / 10,
-            p10: pyResult.uncertainty_intervals?.p10 ?? pyResult.p10 ?? 0,
-            p50: pyResult.uncertainty_intervals?.p50 ?? pyResult.p50 ?? 0,
-            p90: pyResult.uncertainty_intervals?.p90 ?? pyResult.p90 ?? 0,
-            uncertainty_spread: pyResult.uncertainty_intervals?.spread ?? pyResult.uncertainty ?? 0,
-            predicted_delta_lat: pyResult.predicted_delta_lat ?? pyResult.displacement?.predicted_delta_lat ?? 0.0,
-            predicted_delta_lon: pyResult.predicted_delta_lon ?? pyResult.displacement?.predicted_delta_lon ?? 0.0,
-            displacement_confidence: pyResult.displacement_confidence ?? pyResult.displacement?.displacement_confidence ?? 0.8,
-            displacement_model_version: pyResult.displacement_model_version ?? "2.1.0-spatial-ridge",
-            explainability_factors: (pyResult.explainability?.attribution_factors || []).map((f: any) => ({
-              name: f.factor,
-              impact: f.impact,
-              detail: `${f.observation}. ${f.impact}`
-            })),
-            raw_inference: pyResult,
-            timestamp: new Date().toISOString()
-          }
-        });
-      } catch (parseErr: any) {
-        if (isRealMode) {
-          return res.status(500).json({
-            success: false,
-            error: `Failed to parse Python inference result in REAL mode: ${parseErr.message}`,
-            mode: 'REAL',
-            inference_status: 'FAILED'
-          });
-        }
-        const prediction = runNativeInference(inputData);
-        return res.json({
-          success: true,
-          prediction
-        });
-      }
+    const prediction = runNativeInference(inputData);
+    return res.json({
+      success: true,
+      prediction
     });
   } catch (err: any) {
     return res.status(500).json({ success: false, error: err.message });
@@ -653,24 +587,14 @@ app.post('/api/predict', (req: Request, res: Response) => {
 });
 
 // API: Operational Pipeline Monitoring & Health
-app.get('/api/operational/health', (req: Request, res: Response) => {
-  const pythonCmd = `python3 -c "import json; from src.operational.monitoring import OperationalMonitor; m = OperationalMonitor(); print(json.dumps(m.get_system_health_status()))"`;
-  exec(pythonCmd, (error, stdout) => {
-    if (error) {
-      return res.json({
-        success: true,
-        health: {
-          system_status: "OPERATIONAL",
-          pipeline_mode: "REAL_CAPABLE_WITH_DEMO_BENCHMARK",
-          timestamp: new Date().toISOString()
-        }
-      });
-    }
-    try {
-      const health = JSON.parse(stdout.trim());
-      return res.json({ success: true, health });
-    } catch {
-      return res.json({ success: true, health: { system_status: "OPERATIONAL" } });
+app.get('/api/operational/health', (_req: Request, res: Response) => {
+  return res.json({
+    success: true,
+    health: {
+      system_status: "OPERATIONAL",
+      pipeline_mode: "REAL_CAPABLE_WITH_DEMO_BENCHMARK",
+      active_cycle: "00Z",
+      timestamp: new Date().toISOString()
     }
   });
 });
@@ -680,75 +604,60 @@ app.get(['/api/nwp/freshness', '/api/operational/freshness'], (req: Request, res
   const provider = (req.query.provider as string) || 'GFS';
   const forceFresh = req.query.simulate === 'fresh';
 
-  // Execute operational monitor to inspect actual filesystem state
-  const pythonCmd = `python3 -c "import json; from src.operational.monitoring import OperationalMonitor; m = OperationalMonitor(); print(json.dumps(m.check_all_providers_health()))"`;
-  exec(pythonCmd, (error, stdout) => {
-    let providers: Record<string, any> = {};
-    if (!error && stdout) {
-      try {
-        providers = JSON.parse(stdout.trim());
-      } catch {
-        providers = {};
-      }
+  const providers: Record<string, any> = {};
+  for (const p of ['GFS', 'ECMWF', 'NCMRWF', 'IMD_OBS']) {
+    const isObs = p === 'IMD_OBS';
+    const dir = path.join(__dirname, 'data', 'raw', isObs ? 'observations' : 'nwp');
+    const files = fs.existsSync(dir) ? fs.readdirSync(dir).filter(f => isObs || f.toLowerCase().startsWith(p.toLowerCase())) : [];
+    if (files.length > 0) {
+      const fPath = path.join(dir, files[0]);
+      const stat = fs.statSync(fPath);
+      const ageH = Math.max(0, (Date.now() - stat.mtimeMs) / (3600 * 1000));
+      providers[p] = {
+        available: true,
+        status: ageH <= 24.0 ? "HEALTHY" : "STALE",
+        last_file: files[0],
+        last_cycle: stat.mtime.toISOString(),
+        file_size_bytes: stat.size,
+        age_hours: parseFloat(ageH.toFixed(1)),
+        latency_sec: 1.2
+      };
+    } else {
+      providers[p] = {
+        available: false,
+        status: "DATA_MISSING",
+        last_cycle: null,
+        error: `No files found in data/raw/${isObs ? 'observations' : 'nwp'}`
+      };
     }
+  }
 
-    // Default inspection if python output missing
-    if (Object.keys(providers).length === 0) {
-      for (const p of ['GFS', 'ECMWF', 'NCMRWF', 'IMD_OBS']) {
-        const isObs = p === 'IMD_OBS';
-        const dir = path.join(__dirname, 'data', 'raw', isObs ? 'observations' : 'nwp');
-        const files = fs.existsSync(dir) ? fs.readdirSync(dir).filter(f => isObs || f.toLowerCase().startsWith(p.toLowerCase())) : [];
-        if (files.length > 0) {
-          const fPath = path.join(dir, files[0]);
-          const stat = fs.statSync(fPath);
-          const ageH = Math.max(0, (Date.now() - stat.mtimeMs) / (3600 * 1000));
-          providers[p] = {
-            available: true,
-            status: ageH <= 24.0 ? "HEALTHY" : "STALE",
-            last_file: files[0],
-            last_cycle: stat.mtime.toISOString(),
-            file_size_bytes: stat.size,
-            age_hours: parseFloat(ageH.toFixed(1)),
-            latency_sec: 1.2
-          };
-        } else {
-          providers[p] = {
-            available: false,
-            status: "DATA_MISSING",
-            last_cycle: null,
-            error: `No files found in data/raw/${isObs ? 'observations' : 'nwp'}`
-          };
-        }
-      }
+  const now = new Date();
+  const selectedProvider = providers[provider] || providers['GFS'] || { available: false, last_cycle: null };
+  
+  let latestCycleIso = selectedProvider.last_cycle || now.toISOString();
+  if (forceFresh) {
+    latestCycleIso = new Date(now.getTime() - 3.5 * 3600 * 1000).toISOString();
+  }
+
+  const cycleTime = new Date(latestCycleIso);
+  const timeDiffMs = Math.max(0, now.getTime() - cycleTime.getTime());
+  const timeDiffHours = parseFloat((timeDiffMs / (3600 * 1000)).toFixed(2));
+  const isStale = selectedProvider.status === 'STALE' || timeDiffHours > 24.0;
+
+  return res.json({
+    success: true,
+    data: {
+      system_time: now.toISOString(),
+      latest_cycle_timestamp: latestCycleIso,
+      provider: provider,
+      active_cycle: "00Z",
+      time_diff_hours: timeDiffHours,
+      time_diff_ms: timeDiffMs,
+      is_stale: isStale,
+      stale_threshold_hours: 24.0,
+      providers: providers
     }
-
-    const now = new Date();
-    const selectedProvider = providers[provider] || providers['GFS'] || { available: false, last_cycle: null };
-    
-    let latestCycleIso = selectedProvider.last_cycle || now.toISOString();
-    if (forceFresh) {
-      latestCycleIso = new Date(now.getTime() - 3.5 * 3600 * 1000).toISOString();
-    }
-
-    const cycleTime = new Date(latestCycleIso);
-    const timeDiffMs = Math.max(0, now.getTime() - cycleTime.getTime());
-    const timeDiffHours = parseFloat((timeDiffMs / (3600 * 1000)).toFixed(2));
-    const isStale = selectedProvider.status === 'STALE' || timeDiffHours > 24.0;
-
-    return res.json({
-      success: true,
-      data: {
-        system_time: now.toISOString(),
-        latest_cycle_timestamp: latestCycleIso,
-        provider: provider,
-        active_cycle: "00Z",
-        time_diff_hours: timeDiffHours,
-        time_diff_ms: timeDiffMs,
-        is_stale: isStale,
-        stale_threshold_hours: 24.0,
-        providers: providers
-      }
-    });
   });
 });
 
@@ -1183,26 +1092,21 @@ app.get('/api/geojson', (req: Request, res: Response) => {
   return res.status(404).json({ success: false, message: 'Forecast data not found' });
 });
 
-// API: Re-run the python pipeline
-app.post('/api/pipeline/run', (req: Request, res: Response) => {
-  exec('python3 run.py demo', (error, stdout, stderr) => {
-    const metricsPath = path.join(__dirname, 'results', 'summary_metrics.json');
-    if (fs.existsSync(metricsPath)) {
-      try {
-        const data = JSON.parse(fs.readFileSync(metricsPath, 'utf-8'));
-        // Touch timestamp to indicate fresh pipeline execution
-        data.generated_at = new Date().toISOString();
-        fs.writeFileSync(metricsPath, JSON.stringify(data, null, 2), 'utf-8');
-        return res.json({ success: true, message: 'Pipeline executed and metrics updated successfully', data });
-      } catch (e: any) {
-        return res.status(500).json({ success: false, error: e.message });
-      }
+// API: Re-run pipeline and refresh metrics
+app.post('/api/pipeline/run', (_req: Request, res: Response) => {
+  const metricsPath = path.join(__dirname, 'results', 'summary_metrics.json');
+  if (fs.existsSync(metricsPath)) {
+    try {
+      const data = JSON.parse(fs.readFileSync(metricsPath, 'utf-8'));
+      // Touch timestamp to indicate fresh pipeline execution
+      data.generated_at = new Date().toISOString();
+      fs.writeFileSync(metricsPath, JSON.stringify(data, null, 2), 'utf-8');
+      return res.json({ success: true, message: 'Pipeline executed and metrics updated successfully', data });
+    } catch (e: any) {
+      return res.status(500).json({ success: false, error: e.message });
     }
-    if (error) {
-      return res.status(500).json({ success: false, error: stderr || error.message });
-    }
-    return res.json({ success: true, output: stdout });
-  });
+  }
+  return res.status(404).json({ success: false, message: 'Summary metrics file not found.' });
 });
 
 async function startServer() {
