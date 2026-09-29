@@ -2,10 +2,10 @@
 # Problem Statement ID: 26080
 
 project:
-  name: "regime-aware-rainfall-ai"
-  version: "1.0.0"
+  name: "MEGHDRISTI"
+  version: "2.4.0-neural"
   random_seed: 42
-  description: "AI-driven post-processing of Indian monsoon NWP forecasts using weather regime classification"
+  description: "MEGHDRISTI: AI-driven post-processing of Indian monsoon NWP forecasts using weather regime classification"
 
 data:
   raw_dir: "data/raw"

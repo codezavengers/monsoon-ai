@@ -1,5 +1,7 @@
-# Regime-Aware AI Post-Processing of Monsoon Rainfall Forecasts
+# MEGHDRISTI (मेघदृष्टि)
+## Regime-Aware AI Post-Processing of Monsoon Rainfall Forecasts
 
+**System Name:** MEGHDRISTI (मेघदृष्टि · Cloud Vision AI)  
 **Problem Statement ID:** 26080  
 **Title:** Regime-Aware AI Post-Processing of Monsoon Rainfall Forecasts  
 **Domain:** Artificial Intelligence / Machine Learning, Synoptic & Mesoscale Meteorology, Numerical Weather Prediction (NWP), Geospatial Modeling
@@ -17,7 +19,7 @@ During the Indian Summer Monsoon (June–September / JJAS), raw Numerical Weathe
 
 Standard global bias-correction methods (e.g., uniform linear scaling or monolithic ML post-processors) treat all forecast errors uniformly, leading to overcorrection in dry spells and undercorrection in extreme rain events. 
 
-This project implements an end-to-end, scientifically credible **Regime-Aware AI Post-Processing Architecture** that:
+**MEGHDRISTI** implements an end-to-end, scientifically credible **Regime-Aware AI Post-Processing Architecture** that:
 1. Classifies the prevailing synoptic/mesoscale weather regime using both rule-based physical reference baselines and supervised machine learning classifiers.
 2. Performs soft continuous mixture-of-experts routing using predicted class probability distributions across regimes.
 3. Produces calibrated exceedance probabilities for IMD operational thresholds (Heavy $\ge 64.5$ mm, Very Heavy $\ge 115.6$ mm, Extreme $\ge 204.5$ mm).
@@ -41,7 +43,7 @@ flowchart TD
         B1 --> B2[Feature Matrix Extraction<br/>Moisture Flux, Orographic Index, CAPE, Omega]
     end
 
-    subgraph Regime_AI [3. Regime-Aware AI Core]
+    subgraph Regime_AI [3. MEGHDRISTI Regime-Aware Neural Core]
         B2 --> C1[Weather Regime Identification<br/>Rule Reference vs Supervised Multi-Class ML]
         C1 --> C2[Predicted 8-Class Probability Distribution & Confidence]
         C2 --> D1{Soft Mixture Routing}
@@ -59,14 +61,14 @@ flowchart TD
         M1 & M2 & M3 & M4 & M5 & M6 & M7 & M8 --> E1[Corrected 2D Rainfall Grid]
         E1 --> E2[Calibrated Exceedance Probabilities: Heavy, Very Heavy, Extreme]
         E1 --> E3[Quantile Prediction Intervals: P10, P50, P90]
-        E1 --> E4[District & State Spatial Aggregation]
+        E1 --> E4[District & State Spatial Aggregation: 729 Districts]
     end
 
-    subgraph Verification [5. Scientific Verification & Publication]
+    subgraph Verification [5. Scientific Verification & Dashboard]
         E1 & A2 --> V1[True 2-D Fractions Skill Score: 1x1, 3x3, 5x5, 7x7]
         E1 & A2 --> V2[Spatial Centroid Displacement Error km]
         E2 & A2 --> V3[Brier Skill Score & Reliability Diagrams]
-        E4 --> V4[Interactive React Dashboard & Authoritative REST API]
+        E4 --> V4[MEGHDRISTI High-Tech Meteorological Intelligence Dashboard]
     end
 ```
 

@@ -54,7 +54,7 @@ export function DownloadReportButton({
       const downloadUrl = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = downloadUrl;
-      link.download = `monsoon_forecast_report_${forecastDate}_${cleanLead}h.${format}`;
+      link.download = `meghdristi_monsoon_forecast_report_${forecastDate}_${cleanLead}h.${format}`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -68,7 +68,7 @@ export function DownloadReportButton({
       // Fallback: If network or server fails, generate from current client state
       if (format === 'json') {
         const clientReport = {
-          report_title: "Regime-Aware AI Monsoon Rainfall Forecast Report",
+          report_title: "MEGHDRISTI - Regime-Aware AI Monsoon Rainfall Forecast Report",
           exported_at: new Date().toISOString(),
           dashboard_state: {
             forecast_date: forecastDate,
@@ -88,7 +88,7 @@ export function DownloadReportButton({
         const downloadUrl = window.URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = downloadUrl;
-        link.download = `monsoon_forecast_report_${forecastDate}_${leadTime}h.json`;
+        link.download = `meghdristi_monsoon_forecast_report_${forecastDate}_${leadTime}h.json`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);

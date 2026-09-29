@@ -70,7 +70,7 @@ export const DistrictTable: React.FC<DistrictTableProps> = ({ districts, onSelec
         const url = window.URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
-        link.download = 'india_monsoon_district_forecasts.csv';
+        link.download = 'meghdristi_district_forecasts.csv';
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -119,7 +119,7 @@ export const DistrictTable: React.FC<DistrictTableProps> = ({ districts, onSelec
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = 'india_monsoon_district_forecasts.csv';
+    link.download = 'meghdristi_district_forecasts.csv';
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);

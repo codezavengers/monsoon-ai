@@ -182,7 +182,7 @@ export function ModelStatusIndicator({
             <div>
               <div className="flex items-center gap-2">
                 <span className="font-bold text-slate-100 text-sm">
-                  {statusData?.model_name || 'RegimeAwareRainfallAI'}
+                  {statusData?.model_name || 'MEGHDRISTI-NeuralCore'}
                 </span>
                 <span className="font-mono text-[11px] text-sky-400 font-semibold bg-sky-950/60 border border-sky-800/60 px-1.5 py-0.5 rounded">
                   v{statusData?.version || '1.0.0'}

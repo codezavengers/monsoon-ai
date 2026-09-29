@@ -1,6 +1,6 @@
 {
-  "project_name": "regime-aware-rainfall-ai",
-  "model_version": "1.0.0",
+  "project_name": "MEGHDRISTI",
+  "model_version": "2.4.0-neural",
   "mode": "DEMO",
   "seed": 42,
   "generated_at": "2026-09-29T18:48:21.822829+00:00",

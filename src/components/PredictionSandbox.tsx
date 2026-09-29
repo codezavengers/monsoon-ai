@@ -97,12 +97,17 @@ export const PredictionSandbox: React.FC = () => {
     <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-xl space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-800 pb-4">
         <div>
+          <div className="flex items-center gap-2 mb-1">
+            <span className="px-2 py-0.5 text-[10px] font-bold tracking-widest bg-cyan-500/10 text-cyan-400 border border-cyan-500/30 rounded uppercase font-mono">
+              MEGHDRISTI Neural Tester
+            </span>
+          </div>
           <h3 className="text-sm font-semibold text-white flex items-center gap-2">
-            <Sliders className="w-4 h-4 text-sky-400" />
-            Real-Time AI Inference Sandbox & API Tester
+            <Sliders className="w-4 h-4 text-cyan-400" />
+            MEGHDRISTI Real-Time Neural Inference Sandbox & API Tester
           </h3>
           <p className="text-xs text-slate-400 mt-0.5">
-            Test the Regime-Aware ML post-processor dynamically by tuning meteorological inputs or applying synoptic presets.
+            Test the MEGHDRISTI Regime-Aware ML post-processor dynamically by tuning meteorological inputs or applying synoptic presets.
           </p>
         </div>
 
