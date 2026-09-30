@@ -149,7 +149,7 @@ export const IndiaMap: React.FC<IndiaMapProps> = ({
               activeLayer === 'corrected' ? 'bg-emerald-600 text-white shadow' : 'text-slate-300 hover:text-white'
             }`}
           >
-            AI Corrected
+            Post-Processed
           </button>
           <button
             onClick={() => onLayerChange('delta')}

@@ -106,8 +106,9 @@ export function ModelMonitoring({
           </div>
           <div>
             <h2 className="text-base font-bold text-white tracking-tight flex items-center gap-2">
-              <span>MEGHDRISHTI NWP Distribution Drift Monitor</span>
-              <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded border text-cyan-400 border-cyan-800 bg-cyan-950/60">
+              <span>NWP Forecast Distribution Drift Monitor</span>
+              <span className="text-slate-500 text-xs font-normal">·</span>
+              <span className="text-xs text-slate-400 font-mono">
                 Baseline: 2018–2022 JJAS
               </span>
             </h2>

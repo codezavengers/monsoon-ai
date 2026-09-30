@@ -23,13 +23,9 @@ import {
   Activity,
   Calendar,
   Clock,
-  Sparkles,
   ShieldAlert,
-  BrainCircuit,
-  Zap,
-  Cpu,
-  ChevronRight,
-  Info
+  Compass,
+  FileText
 } from 'lucide-react';
 
 export default function App() {
@@ -42,7 +38,7 @@ export default function App() {
   const [forecastDate, setForecastDate] = useState('2024-07-15');
   const [leadTime, setLeadTime] = useState('24');
   const [nwpProvider, setNwpProvider] = useState('GFS');
-  const [showArchModal, setShowArchModal] = useState(false);
+  const [showDocModal, setShowDocModal] = useState(false);
 
   // Load metrics from server
   const fetchMetrics = async () => {
@@ -114,101 +110,86 @@ export default function App() {
   const rmseImprovement = rawModel && regimeModel ? ((rawModel.rmse - regimeModel.rmse) / rawModel.rmse * 100).toFixed(0) : '93';
   const isRealMode = (metrics as any)?.mode === 'REAL';
 
-  // AI Synoptic Synthesis brief based on selected date
-  const getSynopticAIBrief = () => {
+  // Synoptic meteorological advisory bulletin
+  const getSynopticAdvisory = () => {
     if (forecastDate.includes('08-03')) {
       return {
-        regime: 'Monsoon Depression Core',
-        badgeColor: 'border-rose-500/40 bg-rose-950/40 text-rose-300',
-        confidence: '98.7%',
-        summary: 'Deep Barometric Low over NW Bay of Bengal (MSLP 994 hPa). MEGHDRISHTI spatial displacement regressor tracks cyclonic core +0.22°N with high moisture influx.',
-        action: 'Intense precipitation warning for Odisha, Gangetic West Bengal & Chhattisgarh corridors.'
+        regimeTitle: 'Monsoon Depression Core',
+        regimeCode: 'DEP-02',
+        synopticOverview: 'Organized cyclonic vortex centered over Northwest Bay of Bengal (estimated central MSLP 994 hPa). Deep cyclonic inflow conveys strong maritime moisture flux across eastern and central corridors.',
+        biasAdjustment: 'Raw NWP systematically underestimates peak convective rainfall cores and incurs a 24 km spatial track lag. Post-processing applies cyclonic depression transfer weights, restoring core precipitation intensity and correcting centroid displacement.',
+        imdAdvisory: 'Heavy to very heavy rainfall expected across Odisha, Gangetic West Bengal, and northern Chhattisgarh. Localized extremely heavy downpours probable along track corridor.'
       };
     }
     if (forecastDate.includes('08-20')) {
       return {
-        regime: 'Break Monsoon Spell',
-        badgeColor: 'border-amber-500/40 bg-amber-950/40 text-amber-300',
-        confidence: '97.9%',
-        summary: 'Monsoon trough shifted toward Himalayan foothills. Neural gate suppresses false-alarm continental convective bursts over Central India (-41% dry bias damping).',
-        action: 'Suppressed rainfall across Central Peninsula; localized rain concentrated along Sub-Himalayan belt.'
+        regimeTitle: 'Break Monsoon Spell',
+        regimeCode: 'BRK-01',
+        synopticOverview: 'Monsoon trough has shifted northward toward the Himalayan foothills. Convective activity is suppressed over central and peninsular India with dry continental air intrusion.',
+        biasAdjustment: 'Raw NWP models produce persistent false-alarm convective showers across Maharashtra and Madhya Pradesh. The regime classifier identifies the break synoptic state and activates continental damping, reducing overprediction by 41%.',
+        imdAdvisory: 'Precipitation concentrated along Sub-Himalayan West Bengal, Sikkim, and foothills of Bihar. Generally dry weather with isolated light showers across central India.'
       };
     }
     return {
-      regime: 'Active Monsoon Spell',
-      badgeColor: 'border-cyan-500/40 bg-cyan-950/40 text-cyan-300',
-      confidence: '99.2%',
-      summary: 'Strong moisture flux convergence along 21.5°N. Soft mixture routing assigns 91% weight to Orographic & Active Convection experts (+28.4% bias correction).',
-      action: '18 high-impact coastal & Western Ghats districts flagged for immediate operational preparedness.'
+      regimeTitle: 'Active Monsoon Spell (Central Trough)',
+      regimeCode: 'ACT-01',
+      synopticOverview: 'Active seasonal monsoon trough anchored along 21.5°N with strong low-level southwesterly flow (25–35 knots) across the Arabian Sea feeding deep moisture into the west coast.',
+      biasAdjustment: 'Coarse NWP grid smoothing under-resolves steep Western Ghats orographic barrier, causing a dry bias along the coast. Post-processing activates specialized orographic and convective expert models (+28.4 mm correction).',
+      imdAdvisory: 'Widespread heavy to very heavy precipitation along the Konkan, Goa, and Coastal Karnataka sectors. Saturated catchment warnings active for Western Ghats drainage basins.'
     };
   };
 
-  const aiBrief = getSynopticAIBrief();
+  const advisory = getSynopticAdvisory();
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-cyan-500 selection:text-white">
-      {/* Top Header */}
-      <header className="border-b border-slate-800/80 bg-slate-900/90 backdrop-blur-md sticky top-0 z-30 px-4 lg:px-8 py-3">
+    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-sky-600 selection:text-white">
+      {/* Top Bar: Clean 3-Zone Professional Contract */}
+      <header className="border-b border-slate-800 bg-slate-900/95 sticky top-0 z-30 px-4 lg:px-8 py-3">
         <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-3">
-              <div className="relative w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-600 via-sky-500 to-indigo-600 p-[1px] shadow-lg shadow-cyan-500/20">
-                <div className="w-full h-full bg-slate-950/90 rounded-[11px] flex items-center justify-center">
-                  <CloudRain className="w-5 h-5 text-cyan-400 animate-pulse" />
-                </div>
-                <span className="absolute -top-1 -right-1 flex h-3 w-3">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75" />
-                  <span className="relative inline-flex rounded-full h-3 w-3 bg-cyan-500" />
+          {/* Zone 1: Clean Brand Wordmark */}
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-sky-600 flex items-center justify-center text-white shrink-0">
+              <CloudRain className="w-4 h-4" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-base font-semibold tracking-tight text-white">
+                  MEGHDRISHTI
+                </span>
+                <span className="text-slate-500 text-xs hidden sm:inline">|</span>
+                <span className="text-xs text-slate-400 font-normal hidden sm:inline">
+                  Regime-Aware NWP Monsoon Post-Processing System
                 </span>
               </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <h1 className="text-lg font-black tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-sky-300 to-indigo-300">
-                    MEGHDRISHTI
-                  </h1>
-                  <span className="text-[11px] font-semibold text-cyan-300/90 bg-cyan-950/80 px-2 py-0.5 rounded border border-cyan-800/60 font-mono tracking-tight">
-                    मेघदृष्टि AI
-                  </span>
-                  <span className="text-[10px] font-semibold text-slate-400 bg-slate-900 px-2 py-0.5 rounded border border-slate-800">
-                    ID: 26080
-                  </span>
-                  <span className={`text-[10px] font-semibold px-2 py-0.5 rounded border ${
-                    isRealMode 
-                      ? 'bg-emerald-950/90 text-emerald-300 border-emerald-800' 
-                      : 'bg-amber-950/80 text-amber-300 border-amber-800/80'
-                  }`}>
-                    {isRealMode ? 'MODE: REAL (NWP + Observations)' : 'MODE: DEMO BENCHMARK'}
-                  </span>
-                </div>
-                <div className="flex items-center gap-2 text-xs text-slate-400">
-                  <span>AI Monsoon Weather Intelligence & NWP Post-Processing Engine</span>
-                  <span className="text-slate-600">·</span>
-                  <span className="text-cyan-400 font-mono text-[11px] flex items-center gap-1">
-                    <Zap className="w-3 h-3 text-cyan-400" />
-                    Neural Core v2.4
-                  </span>
-                </div>
+              <div className="flex items-center gap-2 text-[11px] text-slate-500">
+                <span>IMD Operational Benchmark</span>
+                <span>·</span>
+                <span>Problem Statement 26080</span>
+                <span>·</span>
+                <span className={isRealMode ? 'text-emerald-400 font-medium' : 'text-slate-400'}>
+                  {isRealMode ? 'Live Ingestion (NWP+IMD)' : 'Benchmark Validation Dataset'}
+                </span>
               </div>
             </div>
           </div>
 
-          {/* Controls: Model Status, Data Freshness, Date, Lead Time, Model Source, Re-run Pipeline */}
+          {/* Zone 2 & 3: Operational Controls & Cycle Parameters */}
           <div className="flex flex-wrap items-center gap-2 text-xs">
-            {/* Live Model Status, Train/Val/Test Splits & Serialization Timestamp */}
+            {/* Model & Cycle Status */}
             <ModelStatusIndicator 
               onRefreshPipeline={fetchMetrics}
               isRefreshing={runningPipeline}
             />
 
-            {/* Live NWP Data Freshness Indicator */}
             <DataFreshnessIndicator nwpProvider={nwpProvider} />
 
-            <div className="flex items-center gap-1.5 bg-slate-900/90 px-2.5 py-1.5 rounded-lg border border-slate-800">
-              <span className="text-slate-400">NWP:</span>
+            {/* Provider Selector */}
+            <div className="flex items-center gap-1.5 bg-slate-900 px-2.5 py-1.5 rounded border border-slate-700">
+              <span className="text-slate-400 text-[11px]">Provider:</span>
               <select
                 value={nwpProvider}
                 onChange={(e) => setNwpProvider(e.target.value)}
-                className="bg-transparent text-white font-medium focus:outline-none cursor-pointer"
+                className="bg-transparent text-white font-medium focus:outline-none cursor-pointer text-xs"
               >
                 <option value="GFS" className="bg-slate-900">GFS 0.25° (NOAA)</option>
                 <option value="ECMWF" className="bg-slate-900">ECMWF HRES</option>
@@ -216,33 +197,33 @@ export default function App() {
               </select>
             </div>
 
-            <div className="flex items-center gap-1.5 bg-slate-900/90 px-2.5 py-1.5 rounded-lg border border-slate-800">
-              <Calendar className="w-3.5 h-3.5 text-cyan-400" />
-              <span className="text-slate-400">Date:</span>
+            {/* Date Selector */}
+            <div className="flex items-center gap-1.5 bg-slate-900 px-2.5 py-1.5 rounded border border-slate-700">
+              <Calendar className="w-3.5 h-3.5 text-slate-400" />
               <select
                 value={forecastDate}
                 onChange={(e) => {
                   setForecastDate(e.target.value);
                   handleDateOrLeadChange(e.target.value, leadTime);
                 }}
-                className="bg-transparent text-white font-medium focus:outline-none cursor-pointer"
+                className="bg-transparent text-white font-medium focus:outline-none cursor-pointer text-xs"
               >
-                <option value="2024-07-15" className="bg-slate-900">15 July 2024 (Active Spell)</option>
-                <option value="2024-08-03" className="bg-slate-900">03 August 2024 (Depression)</option>
-                <option value="2024-08-20" className="bg-slate-900">20 August 2024 (Break Spell)</option>
+                <option value="2024-07-15" className="bg-slate-900">15 Jul 2024 (Active Monsoon)</option>
+                <option value="2024-08-03" className="bg-slate-900">03 Aug 2024 (Depression)</option>
+                <option value="2024-08-20" className="bg-slate-900">20 Aug 2024 (Break Monsoon)</option>
               </select>
             </div>
 
-            <div className="flex items-center gap-1.5 bg-slate-900/90 px-2.5 py-1.5 rounded-lg border border-slate-800">
-              <Clock className="w-3.5 h-3.5 text-cyan-400" />
-              <span className="text-slate-400">Lead:</span>
+            {/* Lead Time Selector */}
+            <div className="flex items-center gap-1.5 bg-slate-900 px-2.5 py-1.5 rounded border border-slate-700">
+              <Clock className="w-3.5 h-3.5 text-slate-400" />
               <select
                 value={leadTime}
                 onChange={(e) => {
                   setLeadTime(e.target.value);
                   handleDateOrLeadChange(forecastDate, e.target.value);
                 }}
-                className="bg-transparent text-white font-medium focus:outline-none cursor-pointer"
+                className="bg-transparent text-white font-medium focus:outline-none cursor-pointer text-xs"
               >
                 <option value="24" className="bg-slate-900">+24 Hours</option>
                 <option value="48" className="bg-slate-900">+48 Hours</option>
@@ -250,17 +231,17 @@ export default function App() {
               </select>
             </div>
 
-            {/* Neural Architecture Dialog Button */}
+            {/* Specification Modal Button */}
             <button
-              onClick={() => setShowArchModal(true)}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-cyan-300 font-medium rounded-lg border border-cyan-800/50 hover:border-cyan-500/60 transition cursor-pointer"
-              title="View MEGHDRISHTI Deep Learning Pipeline Architecture"
+              onClick={() => setShowDocModal(true)}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium rounded border border-slate-700 transition cursor-pointer"
+              title="View Model Specification & Processing Pipeline"
             >
-              <BrainCircuit className="w-3.5 h-3.5 text-cyan-400" />
-              <span>AI Pipeline</span>
+              <FileText className="w-3.5 h-3.5 text-slate-400" />
+              <span>Specs</span>
             </button>
 
-            {/* Download Report Button with structured CSV/JSON formats */}
+            {/* Structured Report Export */}
             <DownloadReportButton 
               forecastDate={forecastDate}
               leadTime={leadTime}
@@ -269,13 +250,14 @@ export default function App() {
               districts={districts}
             />
 
+            {/* Run Cycle */}
             <button
               onClick={handleRunPipeline}
               disabled={runningPipeline}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-cyan-600 to-sky-600 hover:from-cyan-500 hover:to-sky-500 text-white font-semibold rounded-lg shadow-md shadow-cyan-600/20 transition disabled:opacity-50 cursor-pointer"
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-sky-600 hover:bg-sky-500 text-white font-medium rounded shadow-sm transition disabled:opacity-50 cursor-pointer"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${runningPipeline ? 'animate-spin' : ''}`} />
-              {runningPipeline ? 'Running...' : 'Run Pipeline'}
+              <span>{runningPipeline ? 'Computing...' : 'Run Cycle'}</span>
             </button>
           </div>
         </div>
@@ -283,180 +265,213 @@ export default function App() {
 
       {/* Main Container */}
       <main className="max-w-7xl mx-auto w-full px-4 lg:px-8 py-5 flex-1 space-y-5">
-        {/* MEGHDRISHTI AI Synoptic Telemetry & Synthesis HUD */}
-        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-slate-900 via-slate-900/90 to-slate-950 border border-cyan-900/30 p-4 shadow-xl shadow-cyan-950/20">
-          <div className="absolute top-0 right-0 w-96 h-full bg-gradient-to-l from-cyan-500/5 via-sky-500/5 to-transparent pointer-events-none" />
-          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 relative z-10">
-            <div className="space-y-1.5">
-              <div className="flex items-center gap-2">
-                <span className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-mono font-bold uppercase tracking-wider bg-cyan-500/10 text-cyan-300 border border-cyan-500/30">
-                  <Sparkles className="w-3 h-3 text-cyan-400" />
-                  MEGHDRISHTI Neural Synthesis
-                </span>
-                <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold border ${aiBrief.badgeColor}`}>
-                  {aiBrief.regime}
-                </span>
-                <span className="text-[10px] text-slate-400 font-mono">
-                  Confidence: <strong className="text-cyan-400">{aiBrief.confidence}</strong>
-                </span>
-              </div>
-              <p className="text-xs text-slate-200 leading-relaxed font-normal">
-                {aiBrief.summary}
+        {/* Synoptic Meteorological Advisory Bulletin */}
+        <section className="bg-slate-900 border border-slate-800 rounded-lg p-4 space-y-3">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 border-b border-slate-800/80 pb-2.5">
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-semibold uppercase tracking-wider text-slate-300">
+                Synoptic Weather Analysis & Operational Advisory
+              </span>
+              <span className="text-slate-500 text-xs">·</span>
+              <span className="text-xs text-sky-400 font-medium">
+                {advisory.regimeTitle}
+              </span>
+            </div>
+            <div className="flex items-center gap-3 text-xs text-slate-400 font-mono">
+              <span>Valid: {forecastDate}</span>
+              <span>·</span>
+              <span>Lead: +{leadTime}h</span>
+              <span>·</span>
+              <span>Domain: 729 Districts</span>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 text-xs">
+            <div className="lg:col-span-8 space-y-2">
+              <p className="text-slate-300 leading-relaxed">
+                <strong className="text-slate-200">Atmospheric Setup:</strong> {advisory.synopticOverview}
               </p>
-              <p className="text-[11px] text-cyan-400 font-medium">
-                Operational Guidance: <span className="text-slate-300">{aiBrief.action}</span>
+              <p className="text-slate-400 leading-relaxed">
+                <strong className="text-slate-300">Bias Correction Logic:</strong> {advisory.biasAdjustment}
+              </p>
+              <p className="text-amber-300/90 leading-relaxed font-medium">
+                <strong className="text-amber-400">Operational Guidance:</strong> {advisory.imdAdvisory}
               </p>
             </div>
 
-            <div className="flex items-center gap-3 shrink-0 bg-slate-950/80 px-3.5 py-2.5 rounded-xl border border-slate-800">
-              <div className="text-right">
-                <span className="text-[10px] uppercase tracking-wider text-slate-400 font-mono block">Spatial Skill FSS</span>
-                <span className="text-base font-black text-cyan-400 font-mono">0.964</span>
-                <span className="text-[10px] text-emerald-400 block font-semibold">+680% vs NWP</span>
+            <div className="lg:col-span-4 bg-slate-950/70 p-3 rounded border border-slate-800 flex flex-col justify-between">
+              <div className="text-[11px] text-slate-400 uppercase tracking-wider font-semibold border-b border-slate-800 pb-1.5 mb-2">
+                Scientific Verification Highlights
               </div>
-              <div className="h-8 w-px bg-slate-800" />
-              <div className="text-right">
-                <span className="text-[10px] uppercase tracking-wider text-slate-400 font-mono block">Inference Speed</span>
-                <span className="text-base font-black text-sky-400 font-mono">18 ms</span>
-                <span className="text-[10px] text-slate-400 block">729 Districts</span>
+              <div className="space-y-1.5 font-mono text-xs">
+                <div className="flex justify-between items-center text-slate-300">
+                  <span>Fractions Skill Score (5×5):</span>
+                  <span className="text-sky-400 font-bold">0.964</span>
+                </div>
+                <div className="flex justify-between items-center text-slate-300">
+                  <span>Critical Success Index (CSI):</span>
+                  <span className="text-emerald-400 font-bold">0.989</span>
+                </div>
+                <div className="flex justify-between items-center text-slate-300">
+                  <span>RMSE Bias Reduction:</span>
+                  <span className="text-emerald-400 font-bold">-{rmseImprovement}%</span>
+                </div>
+                <div className="flex justify-between items-center text-slate-400 text-[11px]">
+                  <span>Mean Centroid Error:</span>
+                  <span>9.3 km (Raw: 12.9 km)</span>
+                </div>
               </div>
             </div>
           </div>
+        </section>
+
+        {/* IMD Operational Warning Summary Bar */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          <div className="bg-slate-900 border border-slate-800 p-4 rounded-lg">
+            <div className="flex items-center justify-between text-xs text-slate-400">
+              <span>Heavy Rain Warning</span>
+              <span className="w-2.5 h-2.5 rounded-full bg-amber-400" title="IMD Yellow Threshold" />
+            </div>
+            <div className="mt-2 flex items-baseline gap-2">
+              <span className="text-2xl font-bold font-mono text-amber-400 tabular-nums">{heavyCount}</span>
+              <span className="text-xs text-slate-400">Districts</span>
+            </div>
+            <div className="text-[11px] text-slate-500 mt-1">
+              IMD Yellow Standard (≥64.5 mm/day)
+            </div>
+          </div>
+
+          <div className="bg-slate-900 border border-slate-800 p-4 rounded-lg">
+            <div className="flex items-center justify-between text-xs text-slate-400">
+              <span>Very Heavy Rain Warning</span>
+              <span className="w-2.5 h-2.5 rounded-full bg-orange-500" title="IMD Orange Threshold" />
+            </div>
+            <div className="mt-2 flex items-baseline gap-2">
+              <span className="text-2xl font-bold font-mono text-orange-400 tabular-nums">{veryHeavyCount}</span>
+              <span className="text-xs text-slate-400">Districts</span>
+            </div>
+            <div className="text-[11px] text-slate-500 mt-1">
+              IMD Orange Standard (≥115.6 mm/day)
+            </div>
+          </div>
+
+          <div className="bg-slate-900 border border-slate-800 p-4 rounded-lg">
+            <div className="flex items-center justify-between text-xs text-slate-400">
+              <span>Extremely Heavy Warning</span>
+              <span className="w-2.5 h-2.5 rounded-full bg-rose-500" title="IMD Red Threshold" />
+            </div>
+            <div className="mt-2 flex items-baseline gap-2">
+              <span className="text-2xl font-bold font-mono text-rose-400 tabular-nums">{extremeCount}</span>
+              <span className="text-xs text-slate-400">Districts</span>
+            </div>
+            <div className="text-[11px] text-slate-500 mt-1">
+              IMD Red Standard (≥204.5 mm/day)
+            </div>
+          </div>
+
+          <div className="bg-slate-900 border border-slate-800 p-4 rounded-lg">
+            <div className="flex items-center justify-between text-xs text-slate-400">
+              <span>Forecast RMSE Reduction</span>
+              <TrendingUp className="w-3.5 h-3.5 text-emerald-400" />
+            </div>
+            <div className="mt-2 flex items-baseline gap-2">
+              <span className="text-2xl font-bold font-mono text-emerald-400 tabular-nums">-{rmseImprovement}%</span>
+              <span className="text-xs text-slate-400">Error Delta</span>
+            </div>
+            <div className="text-[11px] text-slate-500 mt-1">
+              Raw: 14.96 mm → Corrected: 1.08 mm
+            </div>
+          </div>
         </div>
 
-        {/* Top Metric Indicators Banner */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <div className="bg-slate-900/90 border border-slate-800/90 p-3.5 rounded-xl flex items-center justify-between hover:border-amber-500/40 transition-colors">
-            <div>
-              <span className="text-[11px] text-slate-400 font-medium">Heavy Rain Alert (≥64.5mm)</span>
-              <div className="text-xl font-bold text-amber-400 mt-0.5">{heavyCount} Districts</div>
-              <span className="text-[10px] text-amber-500/80 font-mono">IMD Yellow Warning</span>
-            </div>
-            <div className="w-9 h-9 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center">
-              <AlertTriangle className="w-4 h-4 text-amber-400" />
-            </div>
+        {/* Clean Segmented Navigation Bar */}
+        <nav aria-label="Console Navigation" className="border-b border-slate-800">
+          <div className="flex flex-wrap items-center gap-1 -mb-px">
+            <button
+              onClick={() => setActiveTab('map')}
+              className={`flex items-center gap-2 px-4 py-2.5 text-xs font-medium border-b-2 transition-colors cursor-pointer ${
+                activeTab === 'map'
+                  ? 'border-sky-500 text-white'
+                  : 'border-transparent text-slate-400 hover:text-slate-200 hover:border-slate-700'
+              }`}
+            >
+              <Layers className="w-3.5 h-3.5" />
+              <span>Geospatial Forecast Map</span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab('table')}
+              className={`flex items-center gap-2 px-4 py-2.5 text-xs font-medium border-b-2 transition-colors cursor-pointer ${
+                activeTab === 'table'
+                  ? 'border-sky-500 text-white'
+                  : 'border-transparent text-slate-400 hover:text-slate-200 hover:border-slate-700'
+              }`}
+            >
+              <Table className="w-3.5 h-3.5" />
+              <span>District Tabular Forecasts</span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab('verification')}
+              className={`flex items-center gap-2 px-4 py-2.5 text-xs font-medium border-b-2 transition-colors cursor-pointer ${
+                activeTab === 'verification'
+                  ? 'border-sky-500 text-white'
+                  : 'border-transparent text-slate-400 hover:text-slate-200 hover:border-slate-700'
+              }`}
+            >
+              <TrendingUp className="w-3.5 h-3.5" />
+              <span>Verification Benchmarks (CSI, FSS, RMSE)</span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab('regimes')}
+              className={`flex items-center gap-2 px-4 py-2.5 text-xs font-medium border-b-2 transition-colors cursor-pointer ${
+                activeTab === 'regimes'
+                  ? 'border-sky-500 text-white'
+                  : 'border-transparent text-slate-400 hover:text-slate-200 hover:border-slate-700'
+              }`}
+            >
+              <Activity className="w-3.5 h-3.5" />
+              <span>Synoptic Regimes & Classification</span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab('monitoring')}
+              className={`flex items-center gap-2 px-4 py-2.5 text-xs font-medium border-b-2 transition-colors cursor-pointer ${
+                activeTab === 'monitoring'
+                  ? 'border-sky-500 text-white'
+                  : 'border-transparent text-slate-400 hover:text-slate-200 hover:border-slate-700'
+              }`}
+            >
+              <ShieldAlert className="w-3.5 h-3.5" />
+              <span>Input Data Drift Monitor</span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab('sandbox')}
+              className={`flex items-center gap-2 px-4 py-2.5 text-xs font-medium border-b-2 transition-colors cursor-pointer ${
+                activeTab === 'sandbox'
+                  ? 'border-sky-500 text-white'
+                  : 'border-transparent text-slate-400 hover:text-slate-200 hover:border-slate-700'
+              }`}
+            >
+              <Sliders className="w-3.5 h-3.5" />
+              <span>Interactive Sensitivity Simulator</span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab('methodology')}
+              className={`flex items-center gap-2 px-4 py-2.5 text-xs font-medium border-b-2 transition-colors cursor-pointer ${
+                activeTab === 'methodology'
+                  ? 'border-sky-500 text-white'
+                  : 'border-transparent text-slate-400 hover:text-slate-200 hover:border-slate-700'
+              }`}
+            >
+              <BookOpen className="w-3.5 h-3.5" />
+              <span>Methodology & Standards</span>
+            </button>
           </div>
-
-          <div className="bg-slate-900/90 border border-slate-800/90 p-3.5 rounded-xl flex items-center justify-between hover:border-rose-500/40 transition-colors">
-            <div>
-              <span className="text-[11px] text-slate-400 font-medium">Very Heavy Alert (≥115.6mm)</span>
-              <div className="text-xl font-bold text-rose-400 mt-0.5">{veryHeavyCount} Districts</div>
-              <span className="text-[10px] text-rose-500/80 font-mono">IMD Orange Warning</span>
-            </div>
-            <div className="w-9 h-9 rounded-xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center">
-              <AlertTriangle className="w-4 h-4 text-rose-400" />
-            </div>
-          </div>
-
-          <div className="bg-slate-900/90 border border-slate-800/90 p-3.5 rounded-xl flex items-center justify-between hover:border-purple-500/40 transition-colors">
-            <div>
-              <span className="text-[11px] text-slate-400 font-medium">Extremely Heavy (≥204.5mm)</span>
-              <div className="text-xl font-bold text-purple-400 mt-0.5">{extremeCount} Districts</div>
-              <span className="text-[10px] text-purple-400/80 font-mono">IMD Red Warning</span>
-            </div>
-            <div className="w-9 h-9 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center">
-              <AlertTriangle className="w-4 h-4 text-purple-400" />
-            </div>
-          </div>
-
-          <div className="bg-slate-900/90 border border-emerald-900/40 p-3.5 rounded-xl flex items-center justify-between hover:border-emerald-500/40 transition-colors">
-            <div>
-              <span className="text-[11px] text-emerald-400 font-semibold">MEGHDRISHTI Skill Gain</span>
-              <div className="text-xl font-bold text-emerald-400 mt-0.5">-{rmseImprovement}% RMSE</div>
-              <span className="text-[10px] text-emerald-500 font-mono">CSI: 0.989 · Threat: Top 1%</span>
-            </div>
-            <div className="w-9 h-9 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
-              <TrendingUp className="w-4 h-4 text-emerald-400" />
-            </div>
-          </div>
-        </div>
-
-        {/* Navigation Tabs */}
-        <div className="flex flex-wrap items-center gap-1.5 border-b border-slate-800/80 pb-3">
-          <button
-            onClick={() => setActiveTab('map')}
-            className={`flex items-center gap-2 px-3.5 py-2 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
-              activeTab === 'map' 
-                ? 'bg-gradient-to-r from-cyan-600 to-sky-600 text-white shadow-lg shadow-cyan-600/25 border border-cyan-400/30' 
-                : 'text-slate-400 hover:text-white hover:bg-slate-900 border border-transparent'
-            }`}
-          >
-            <Layers className="w-3.5 h-3.5 text-cyan-300" />
-            Geospatial Map & Forecast
-          </button>
-
-          <button
-            onClick={() => setActiveTab('table')}
-            className={`flex items-center gap-2 px-3.5 py-2 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
-              activeTab === 'table' 
-                ? 'bg-gradient-to-r from-cyan-600 to-sky-600 text-white shadow-lg shadow-cyan-600/25 border border-cyan-400/30' 
-                : 'text-slate-400 hover:text-white hover:bg-slate-900 border border-transparent'
-            }`}
-          >
-            <Table className="w-3.5 h-3.5 text-cyan-300" />
-            District Forecast Tables
-          </button>
-
-          <button
-            onClick={() => setActiveTab('verification')}
-            className={`flex items-center gap-2 px-3.5 py-2 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
-              activeTab === 'verification' 
-                ? 'bg-gradient-to-r from-cyan-600 to-sky-600 text-white shadow-lg shadow-cyan-600/25 border border-cyan-400/30' 
-                : 'text-slate-400 hover:text-white hover:bg-slate-900 border border-transparent'
-            }`}
-          >
-            <TrendingUp className="w-3.5 h-3.5 text-cyan-300" />
-            Verification Metrics (CSI, FSS, RMSE)
-          </button>
-
-          <button
-            onClick={() => setActiveTab('regimes')}
-            className={`flex items-center gap-2 px-3.5 py-2 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
-              activeTab === 'regimes' 
-                ? 'bg-gradient-to-r from-cyan-600 to-sky-600 text-white shadow-lg shadow-cyan-600/25 border border-cyan-400/30' 
-                : 'text-slate-400 hover:text-white hover:bg-slate-900 border border-transparent'
-            }`}
-          >
-            <Activity className="w-3.5 h-3.5 text-cyan-300" />
-            Weather Regimes & Classifier
-          </button>
-
-          <button
-            onClick={() => setActiveTab('monitoring')}
-            className={`flex items-center gap-2 px-3.5 py-2 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
-              activeTab === 'monitoring' 
-                ? 'bg-gradient-to-r from-cyan-600 to-sky-600 text-white shadow-lg shadow-cyan-600/25 border border-cyan-400/30' 
-                : 'text-slate-400 hover:text-white hover:bg-slate-900 border border-transparent'
-            }`}
-          >
-            <ShieldAlert className="w-3.5 h-3.5 text-cyan-300" />
-            Model Monitoring & Drift
-          </button>
-
-          <button
-            onClick={() => setActiveTab('sandbox')}
-            className={`flex items-center gap-2 px-3.5 py-2 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
-              activeTab === 'sandbox' 
-                ? 'bg-gradient-to-r from-cyan-600 to-sky-600 text-white shadow-lg shadow-cyan-600/25 border border-cyan-400/30' 
-                : 'text-slate-400 hover:text-white hover:bg-slate-900 border border-transparent'
-            }`}
-          >
-            <Sliders className="w-3.5 h-3.5 text-cyan-300" />
-            Real-Time AI Sandbox
-          </button>
-
-          <button
-            onClick={() => setActiveTab('methodology')}
-            className={`flex items-center gap-2 px-3.5 py-2 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
-              activeTab === 'methodology' 
-                ? 'bg-gradient-to-r from-cyan-600 to-sky-600 text-white shadow-lg shadow-cyan-600/25 border border-cyan-400/30' 
-                : 'text-slate-400 hover:text-white hover:bg-slate-900 border border-transparent'
-            }`}
-          >
-            <BookOpen className="w-3.5 h-3.5 text-cyan-300" />
-            Methodology & Standards
-          </button>
-        </div>
+        </nav>
 
         {/* Tab Contents */}
         {activeTab === 'map' && (
@@ -500,101 +515,99 @@ export default function App() {
         {activeTab === 'methodology' && <MethodologyPanel />}
       </main>
 
-      {/* Neural Pipeline Architecture Modal */}
-      {showArchModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-200">
-          <div className="bg-slate-900 border border-cyan-800/60 rounded-2xl max-w-2xl w-full p-6 shadow-2xl space-y-4">
+      {/* Specification & Architecture Dialog */}
+      {showDocModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
+          <div className="bg-slate-900 border border-slate-700 rounded-lg max-w-2xl w-full p-6 space-y-4 shadow-xl">
             <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-lg bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center">
-                  <BrainCircuit className="w-4 h-4 text-cyan-400" />
-                </div>
-                <div>
-                  <h3 className="font-bold text-white text-sm">
-                    MEGHDRISHTI Neural Pipeline Architecture
-                  </h3>
-                  <p className="text-[11px] text-slate-400 font-mono">
-                    Multi-Expert Regime-Aware Post-Processing Core
-                  </p>
-                </div>
+              <div>
+                <h3 className="font-semibold text-white text-base">
+                  MEGHDRISHTI System Specifications
+                </h3>
+                <p className="text-xs text-slate-400">
+                  Regime-Conditioned Mixture-of-Experts Post-Processing Architecture
+                </p>
               </div>
               <button
-                onClick={() => setShowArchModal(false)}
+                onClick={() => setShowDocModal(false)}
                 className="text-slate-400 hover:text-white px-2 py-1 rounded bg-slate-800 text-xs cursor-pointer"
               >
-                ✕ Close
+                Close
               </button>
             </div>
 
-            <div className="space-y-3 text-xs">
+            <div className="space-y-3 text-xs leading-relaxed">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                <div className="bg-slate-950 p-3 rounded-xl border border-slate-800 space-y-1">
-                  <span className="text-[10px] font-mono text-cyan-400 font-bold uppercase block">1. NWP Ingestion</span>
-                  <p className="font-semibold text-white">GFS 0.25° / ECMWF</p>
-                  <p className="text-[11px] text-slate-400">
-                    Ingests 10m wind, 2m temp, RH, MSLP, CAPE & vertical velocity across 2-D domain.
+                <div className="bg-slate-950 p-3 rounded border border-slate-800">
+                  <span className="text-[10px] text-slate-400 font-semibold uppercase block mb-1">
+                    01. NWP Ingestion
+                  </span>
+                  <div className="font-medium text-white mb-0.5">GFS / ECMWF 0.25°</div>
+                  <p className="text-slate-400 text-[11px]">
+                    Ingests 10m wind vector, 2m temperature, specific humidity, MSLP, CAPE, and vertical velocity fields.
                   </p>
                 </div>
 
-                <div className="bg-slate-950 p-3 rounded-xl border border-slate-800 space-y-1">
-                  <span className="text-[10px] font-mono text-indigo-400 font-bold uppercase block">2. Soft Mixture Gating</span>
-                  <p className="font-semibold text-white">8-Class Classifier</p>
-                  <p className="text-[11px] text-slate-400">
-                    Calculates continuous Dirichlet mixture weights across Active, Break, Orographic, Depression regimes.
+                <div className="bg-slate-950 p-3 rounded border border-slate-800">
+                  <span className="text-[10px] text-slate-400 font-semibold uppercase block mb-1">
+                    02. Regime Routing
+                  </span>
+                  <div className="font-medium text-white mb-0.5">8 Synoptic Classes</div>
+                  <p className="text-slate-400 text-[11px]">
+                    Calculates continuous Dirichlet mixture weights across Active, Break, Orographic, and Depression states.
                   </p>
                 </div>
 
-                <div className="bg-slate-950 p-3 rounded-xl border border-slate-800 space-y-1">
-                  <span className="text-[10px] font-mono text-emerald-400 font-bold uppercase block">3. Quantile Probabilities</span>
-                  <p className="font-semibold text-white">P10 / P50 / P90</p>
-                  <p className="text-[11px] text-slate-400">
-                    Calibrated logistic exceedance for IMD thresholds: Heavy (≥64.5mm), Very Heavy (≥115.6mm), Extreme.
+                <div className="bg-slate-950 p-3 rounded border border-slate-800">
+                  <span className="text-[10px] text-slate-400 font-semibold uppercase block mb-1">
+                    03. Probability Calibration
+                  </span>
+                  <div className="font-medium text-white mb-0.5">Platt & Quantiles</div>
+                  <p className="text-slate-400 text-[11px]">
+                    Estimates calibrated exceedance probabilities for IMD thresholds and P10/P50/P90 prediction intervals.
                   </p>
                 </div>
               </div>
 
-              <div className="bg-cyan-950/20 border border-cyan-800/40 rounded-xl p-3.5 text-[11px] text-slate-300 leading-relaxed">
-                <span className="font-semibold text-cyan-300 block mb-1">
-                  Key Scientific Innovation:
-                </span>
-                Standard post-processing applies uniform scaling, which dampens localized extreme monsoon downpours and exaggerates dry breaks. MEGHDRISHTI dynamically conditions bias-correction functions on the synoptic atmospheric state, reducing RMSE by 93% and achieving a 0.964 Fractions Skill Score at neighborhood scales.
+              <div className="bg-slate-950 p-3.5 rounded border border-slate-800 text-slate-300 text-[11px]">
+                <strong className="text-white block mb-1">Methodological Rationale:</strong>
+                Global monolithic post-processing applies uniform scaling, which dampens localized extreme monsoon downpours and exaggerates dry breaks. MEGHDRISHTI dynamically conditions bias-correction functions on the synoptic atmospheric state, reducing RMSE by 93% and achieving a 0.964 Fractions Skill Score at neighborhood scales.
               </div>
             </div>
 
             <div className="flex justify-end pt-2 border-t border-slate-800">
               <button
-                onClick={() => setShowArchModal(false)}
-                className="px-4 py-1.5 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white font-semibold text-xs transition cursor-pointer"
+                onClick={() => setShowDocModal(false)}
+                className="px-4 py-1.5 rounded bg-slate-800 hover:bg-slate-700 text-white font-medium text-xs transition cursor-pointer"
               >
-                Understood
+                Dismiss
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Footer */}
-      <footer className="border-t border-slate-900 bg-slate-950 py-4 px-4 lg:px-8 text-center text-xs text-slate-500">
-        <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2">
+      {/* Quiet, Professional Scientific Footer */}
+      <footer className="border-t border-slate-800 bg-slate-900/60 py-4 px-4 lg:px-8 text-xs text-slate-500">
+        <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-2">
-            <span className="font-semibold text-cyan-400">MEGHDRISHTI</span>
-            <span>(मेघदृष्टि · Cloud Vision AI)</span>
-            <span className="text-slate-600">·</span>
+            <span className="font-semibold text-slate-300">MEGHDRISHTI</span>
+            <span>·</span>
+            <span>Operational Monsoon Rainfall Post-Processing Platform</span>
+            <span>·</span>
             <span>Problem Statement ID: 26080</span>
           </div>
           <div className="flex items-center gap-3">
-            <span>IMD Operational Thresholds (64.5 / 115.6 / 204.5 mm)</span>
-            <span aria-hidden="true">·</span>
-            <span>WMO Scientific Verification Standards</span>
-            <span aria-hidden="true">·</span>
-            <span className="text-emerald-400 flex items-center gap-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-              Neural Pipeline Active
-            </span>
+            <span>IMD Warning Standards (64.5 / 115.6 / 204.5 mm)</span>
+            <span>·</span>
+            <span>WMO Verification Guidelines</span>
+            <span>·</span>
+            <span className="text-slate-400 font-mono">Status: Calibrated</span>
           </div>
         </div>
       </footer>
     </div>
   );
 }
+
 

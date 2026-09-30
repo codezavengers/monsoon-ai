@@ -71,13 +71,13 @@ export const DistrictDrilldown: React.FC<DistrictDrilldownProps> = ({ district, 
         <div className="bg-slate-950/60 p-2.5 rounded-lg border border-emerald-900/40 relative overflow-hidden">
           <div className="absolute top-0 right-0 w-12 h-12 bg-emerald-500/10 rounded-bl-full pointer-events-none" />
           <span className="text-[11px] text-emerald-400 font-medium flex items-center justify-between">
-            MEGHDRISHTI AI Corrected
+            Post-Processed Forecast
             <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-emerald-950 border border-emerald-700/60 text-emerald-300">
               {isPositiveDelta ? `+${delta}` : delta} mm
             </span>
           </span>
           <div className="text-lg font-bold text-emerald-300 mt-0.5">{district.corrected_max} <span className="text-xs font-normal text-slate-400">mm</span></div>
-          <span className="text-[10px] text-slate-400">MEGHDRISHTI Neural Core</span>
+          <span className="text-[10px] text-slate-400">Regime Mixture Corrected</span>
         </div>
 
         <div className="bg-slate-950/60 p-2.5 rounded-lg border border-slate-800">
@@ -182,19 +182,19 @@ export const DistrictDrilldown: React.FC<DistrictDrilldownProps> = ({ district, 
         </div>
       </div>
 
-      {/* Explainable AI: Why was rainfall corrected? */}
+      {/* Physical & Statistical Attribution Diagnostics */}
       <div className="bg-slate-950/70 p-3.5 rounded-lg border border-slate-800">
         <div className="flex items-center justify-between mb-2">
-          <span className="text-xs font-semibold text-cyan-400 uppercase tracking-wider flex items-center gap-1.5">
-            <HelpCircle className="w-3.5 h-3.5 text-cyan-400" />
-            MEGHDRISHTI Explainable AI (XAI): Why was rainfall corrected?
+          <span className="text-xs font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+            <HelpCircle className="w-3.5 h-3.5 text-sky-400" />
+            Physical & Statistical Attribution Diagnostics
           </span>
-          <span className="text-[10px] text-slate-500 italic">Statistical Attribution</span>
+          <span className="text-[10px] text-slate-500 italic">SHAP Gradient Weights</span>
         </div>
 
         <p className="text-xs text-slate-300 mb-2.5">
-          Raw NWP predicted <span className="font-semibold text-sky-300">{district.raw_nwp_max} mm</span>. 
-          MEGHDRISHTI Neural Core adjusted forecast to <span className="font-semibold text-emerald-300">{district.corrected_max} mm</span> ({isPositiveDelta ? `+${delta}` : delta} mm adjustment).
+          Raw NWP forecast: <span className="font-semibold text-sky-300">{district.raw_nwp_max} mm</span>. 
+          Post-processing calibrated forecast to <span className="font-semibold text-emerald-300">{district.corrected_max} mm</span> ({isPositiveDelta ? `+${delta}` : delta} mm adjustment).
         </p>
 
         {/* Factors */}
